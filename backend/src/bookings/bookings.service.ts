@@ -123,9 +123,8 @@ export class BookingsService {
 
   async getAvailableSlots(businessId: string, serviceId: string, date: string): Promise<string[]> {
     const service = await this.servicesService.findOne(serviceId);
-    const targetDate = new Date(date);
-    const dayStart = new Date(targetDate.setHours(9, 0, 0, 0));
-    const dayEnd = new Date(targetDate.setHours(18, 0, 0, 0));
+    const dayStart = new Date(`${date}T09:00:00`);
+    const dayEnd = new Date(`${date}T18:00:00`);
 
     const existingBookings = await this.bookingModel.find({
       business: new Types.ObjectId(businessId),

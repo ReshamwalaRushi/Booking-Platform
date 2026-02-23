@@ -97,11 +97,7 @@ export function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {upcomingBookings.map((booking) => (
-                <BookingList key={booking._id} bookings={[booking]} isLoading={false} />
-              ))}
-            </div>
+            <BookingList bookings={upcomingBookings} isLoading={false} />
           )}
         </div>
 

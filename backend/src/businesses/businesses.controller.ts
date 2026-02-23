@@ -18,6 +18,14 @@ export class BusinessesController {
     return this.businessesService.findAll(category);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('owner/my-businesses')
+  @ApiOperation({ summary: 'Get current user businesses' })
+  findMyBusinesses(@CurrentUser() user: any) {
+    return this.businessesService.findByOwner(user.userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get business by ID' })
   findOne(@Param('id') id: string) {
@@ -30,14 +38,6 @@ export class BusinessesController {
   @ApiOperation({ summary: 'Create a new business' })
   create(@Body() createBusinessDto: CreateBusinessDto, @CurrentUser() user: any) {
     return this.businessesService.create(createBusinessDto, user.userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @Get('owner/my-businesses')
-  @ApiOperation({ summary: 'Get current user businesses' })
-  findMyBusinesses(@CurrentUser() user: any) {
-    return this.businessesService.findByOwner(user.userId);
   }
 
   @UseGuards(JwtAuthGuard)

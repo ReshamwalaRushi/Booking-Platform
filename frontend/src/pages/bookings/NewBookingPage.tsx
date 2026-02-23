@@ -90,7 +90,7 @@ export function NewBookingPage() {
               <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-3 py-1.5 rounded-full text-sm capitalize ${categoryFilter === cat ? 'bg-primary-600 text-white' : 'bg-white border border-gray-300 text-gray-600'}`}>{cat}</button>
             ))}
           </div>
-          <BusinessList businesses={businesses} isLoading={isLoading} />
+          <BusinessList businesses={businesses} isLoading={isLoading} onSelect={handleBusinessSelect} />
           <div className="mt-4 text-sm text-gray-500">
             Click on a business to select it, then choose a service.
           </div>
