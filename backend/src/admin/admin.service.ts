@@ -37,14 +37,18 @@ export class AdminService {
     approved: boolean,
     notes?: string,
   ): Promise<BusinessDocument> {
+    const update: Record<string, unknown> = { isVerified: approved };
+    if (notes) update['verificationNotes'] = notes;
     return this.businessModel
-      .findByIdAndUpdate(id, { isVerified: approved }, { new: true })
+      .findByIdAndUpdate(id, update, { new: true })
       .exec();
   }
 
   async suspendUser(id: string, reason?: string): Promise<UserDocument> {
+    const update: Record<string, unknown> = { isActive: false };
+    if (reason) update['suspensionReason'] = reason;
     return this.userModel
-      .findByIdAndUpdate(id, { isActive: false }, { new: true })
+      .findByIdAndUpdate(id, update, { new: true })
       .exec();
   }
 
@@ -84,8 +88,10 @@ export class AdminService {
   }
 
   async updateUserStatus(id: string, isActive: boolean, reason?: string): Promise<UserDocument> {
+    const update: Record<string, unknown> = { isActive };
+    if (!isActive && reason) update['suspensionReason'] = reason;
     return this.userModel
-      .findByIdAndUpdate(id, { isActive }, { new: true })
+      .findByIdAndUpdate(id, update, { new: true })
       .exec();
   }
 }

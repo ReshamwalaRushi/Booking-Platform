@@ -37,14 +37,14 @@ export class StaffService {
   }
 
   async update(id: string, updateStaffDto: UpdateStaffDto): Promise<StaffDocument> {
-    const staff = await this.staffModel.findById(id);
-    if (!staff) throw new NotFoundException('Staff member not found');
     const { assignedServices, ...rest } = updateStaffDto;
     const updateData: Record<string, unknown> = { ...rest };
     if (assignedServices) {
       updateData.assignedServices = assignedServices.map((sid) => new Types.ObjectId(sid));
     }
-    return this.staffModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    const updated = await this.staffModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    if (!updated) throw new NotFoundException('Staff member not found');
+    return updated;
   }
 
   async remove(id: string): Promise<void> {

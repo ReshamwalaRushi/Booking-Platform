@@ -15,7 +15,7 @@ export function AdminUsersPage() {
       setIsLoading(true);
       try {
         const result = await api.adminGetUsers();
-        setUsers(result.data ?? (result as unknown as User[]));
+        setUsers(result.data);
       } catch {
         toast.error('Failed to load users');
       } finally {

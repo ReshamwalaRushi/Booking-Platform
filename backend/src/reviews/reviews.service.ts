@@ -3,9 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Document } from 'mongoose';
 import { Review, ReviewDocument } from './schemas/review.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { Business } from '../businesses/schemas/business.schema';
-
-type PopulatedBusiness = Business & Document & { _id: Types.ObjectId };
 
 @Injectable()
 export class ReviewsService {
@@ -46,12 +43,12 @@ export class ReviewsService {
   ): Promise<ReviewDocument> {
     const review = await this.reviewModel
       .findById(reviewId)
-      .populate('businessId')
+      .populate<{ businessId: Document & { owner: Types.ObjectId } }>('businessId')
       .exec();
     if (!review) throw new NotFoundException('Review not found');
 
-    const business = review.businessId as unknown as PopulatedBusiness;
-    if (business.owner && business.owner.toString() !== userId) {
+    const business = review.businessId as Document & { owner: Types.ObjectId };
+    if (business && business.owner && business.owner.toString() !== userId) {
       throw new ForbiddenException('Not authorized to respond to this review');
     }
 

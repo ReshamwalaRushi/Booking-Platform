@@ -18,7 +18,7 @@ export function AdminBusinessesPage() {
       setIsLoading(true);
       try {
         const result = await api.adminGetBusinesses();
-        setBusinesses(result.data ?? (result as unknown as Business[]));
+        setBusinesses(result.data);
       } catch {
         toast.error('Failed to load businesses');
       } finally {

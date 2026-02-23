@@ -16,6 +16,18 @@ services:
     networks:
       - booking-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: booking-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-network
+
   backend:
     build:
       context: ./backend
@@ -28,6 +40,7 @@ services:
       PORT: 3001
       NODE_ENV: production
       MONGODB_URI: mongodb://admin:password@mongodb:27017/booking-platform?authSource=admin
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production-super-secret}
       JWT_EXPIRES_IN: 7d
       EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
@@ -49,6 +62,7 @@ services:
       FRONTEND_URL: http://localhost:3000
     depends_on:
       - mongodb
+      - redis
     networks:
       - booking-network
 
@@ -69,6 +83,7 @@ services:
 
 volumes:
   mongodb_data:
+  redis_data:
 
 networks:
   booking-network:
