@@ -6,9 +6,10 @@ import { LoadingSpinner } from '../common/LoadingSpinner';
 interface BusinessListProps {
   businesses: Business[];
   isLoading: boolean;
+  onSelect?: (business: Business) => void;
 }
 
-export function BusinessList({ businesses, isLoading }: BusinessListProps) {
+export function BusinessList({ businesses, isLoading, onSelect }: BusinessListProps) {
   if (isLoading) return <LoadingSpinner className="py-12" />;
   if (businesses.length === 0) {
     return (
@@ -22,7 +23,7 @@ export function BusinessList({ businesses, isLoading }: BusinessListProps) {
   }
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-      {businesses.map((b) => <BusinessCard key={b._id} business={b} />)}
+      {businesses.map((b) => <BusinessCard key={b._id} business={b} onSelect={onSelect} />)}
     </div>
   );
 }
