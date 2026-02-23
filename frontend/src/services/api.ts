@@ -156,6 +156,83 @@ class ApiService {
     const { data } = await this.client.get('/calendar/auth-url');
     return data;
   }
+
+  // Staff
+  async getStaff(businessId: string): Promise<unknown[]> {
+    const { data } = await this.client.get('/staff', { params: { businessId } });
+    return data;
+  }
+
+  async createStaff(payload: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post('/staff', payload);
+    return data;
+  }
+
+  async updateStaff(id: string, payload: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.patch(`/staff/${id}`, payload);
+    return data;
+  }
+
+  async deleteStaff(id: string): Promise<void> {
+    await this.client.delete(`/staff/${id}`);
+  }
+
+  // Reviews
+  async getBusinessReviews(businessId: string): Promise<unknown[]> {
+    const { data } = await this.client.get(`/reviews/business/${businessId}`);
+    return data;
+  }
+
+  async createReview(payload: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post('/reviews', payload);
+    return data;
+  }
+
+  // Admin
+  async getAdminStats(): Promise<Record<string, unknown>> {
+    const { data } = await this.client.get('/admin/dashboard');
+    return data;
+  }
+
+  async getPendingBusinesses(): Promise<Business[]> {
+    const { data } = await this.client.get<Business[]>('/admin/businesses/pending');
+    return data;
+  }
+
+  async verifyBusiness(id: string, approved: boolean, notes?: string): Promise<Business> {
+    const { data } = await this.client.patch<Business>(`/admin/businesses/${id}/verify`, { approved, notes });
+    return data;
+  }
+
+  async adminGetUsers(page?: number): Promise<{ data: User[]; total: number; page: number; limit: number }> {
+    const { data } = await this.client.get('/admin/users', { params: page ? { page } : {} });
+    return data;
+  }
+
+  async adminGetBusinesses(page?: number): Promise<{ data: Business[]; total: number; page: number; limit: number }> {
+    const { data } = await this.client.get('/admin/businesses', { params: page ? { page } : {} });
+    return data;
+  }
+
+  async adminUpdateUserStatus(id: string, isActive: boolean, reason?: string): Promise<User> {
+    const { data } = await this.client.patch<User>(`/admin/users/${id}/status`, { isActive, reason });
+    return data;
+  }
+
+  async adminUpdateBusinessStatus(id: string, isActive: boolean, reason?: string): Promise<Business> {
+    const { data } = await this.client.patch<Business>(`/admin/businesses/${id}/status`, { isActive, reason });
+    return data;
+  }
+
+  // Business services management
+  async updateService(id: string, payload: Partial<Service>): Promise<Service> {
+    const { data } = await this.client.patch<Service>(`/services/${id}`, payload);
+    return data;
+  }
+
+  async deleteService(id: string): Promise<void> {
+    await this.client.delete(`/services/${id}`);
+  }
 }
 
 export const api = new ApiService();
