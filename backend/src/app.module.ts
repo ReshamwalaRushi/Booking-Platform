@@ -12,6 +12,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ZoomModule } from './zoom/zoom.module';
+import { StaffModule } from './staff/staff.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -35,6 +38,9 @@ import { ZoomModule } from './zoom/zoom.module';
     PaymentsModule,
     CalendarModule,
     ZoomModule,
+    StaffModule,
+    ReviewsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
