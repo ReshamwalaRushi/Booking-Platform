@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { UserRole } from '../../types';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 export function RegisterPage() {
@@ -51,11 +52,28 @@ export function RegisterPage() {
     if (!validate()) return;
     try {
       await register(form);
-      toast.success('Account created successfully!');
-      if (form.role === UserRole.BUSINESS_OWNER) {
-        toast('Complete your business profile in the dashboard.', { icon: '📋' });
+      if (form.role === UserRole.BUSINESS_OWNER && businessDetails.businessName.trim()) {
+        try {
+          await api.createBusiness({
+            name: businessDetails.businessName.trim(),
+            description: businessDetails.businessDescription.trim() || undefined,
+            website: businessDetails.businessWebsite.trim() || undefined,
+            address: {
+              street: businessDetails.street.trim() || '',
+              city: businessDetails.city.trim() || '',
+              state: businessDetails.state.trim() || '',
+              zipCode: businessDetails.zip.trim() || '',
+              country: 'US',
+            },
+          } as any);
+          toast.success('Account and business profile created!');
+        } catch {
+          toast.success('Account created! Add business details in your dashboard.');
+        }
+      } else {
+        toast.success('Account created successfully!');
       }
-      navigate('/dashboard');
+      navigate(form.role === UserRole.BUSINESS_OWNER ? '/business/dashboard' : '/dashboard');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Registration failed');
     }
@@ -101,7 +119,6 @@ export function RegisterPage() {
                   value={businessDetails.businessName}
                   onChange={updateBusiness('businessName')}
                   placeholder="Acme Salon"
-                  required
                 />
                 <Input
                   label="Business Website (optional)"
