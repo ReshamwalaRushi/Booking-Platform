@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Business, Service } from '../../types';
+import { Business, Review, Service } from '../../types';
 import api from '../../services/api';
 import { ServiceCard } from '../../components/Service/ServiceCard';
 import { BookingForm } from '../../components/Booking/BookingForm';
+import { ReviewForm } from '../../components/Review/ReviewForm';
+import { ReviewList } from '../../components/Review/ReviewList';
 import { Modal } from '../../components/common/Modal';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { Button } from '../../components/common/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
 
 export function BusinessDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [business, setBusiness] = useState<Business | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,9 +28,14 @@ export function BusinessDetailPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [biz, svcs] = await Promise.all([api.getBusiness(id), api.getServices(id)]);
+        const [biz, svcs, revs] = await Promise.all([
+          api.getBusiness(id),
+          api.getServices(id),
+          api.getBusinessReviews(id),
+        ]);
         setBusiness(biz);
         setServices(svcs);
+        setReviews(revs);
       } catch {
         navigate('/businesses');
       } finally {
@@ -37,6 +49,9 @@ export function BusinessDetailPage() {
   if (!business) return null;
 
   const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
 
   return (
     <div>
@@ -57,6 +72,11 @@ export function BusinessDetailPage() {
               )}
             </div>
             <p className="text-gray-500 capitalize">{business.category}</p>
+            {avgRating && (
+              <p className="text-sm text-yellow-600 mt-1">
+                ★ {avgRating} <span className="text-gray-400">({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+              </p>
+            )}
             <p className="text-gray-700 mt-2">{business.description}</p>
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
               {business.phone && (
@@ -102,6 +122,31 @@ export function BusinessDetailPage() {
           ))}
         </div>
       )}
+
+      <div className="card mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
+          {user && user.role === UserRole.CLIENT && !showReviewForm && (
+            <Button size="sm" variant="ghost" onClick={() => setShowReviewForm(true)}>
+              ✍️ Write a Review
+            </Button>
+          )}
+        </div>
+        {showReviewForm && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Share your experience</h3>
+            <ReviewForm
+              businessId={business._id}
+              onSuccess={() => {
+                setShowReviewForm(false);
+                api.getBusinessReviews(business._id).then(setReviews);
+              }}
+              onCancel={() => setShowReviewForm(false)}
+            />
+          </div>
+        )}
+        <ReviewList reviews={reviews} />
+      </div>
 
       <Modal
         isOpen={!!selectedService}
