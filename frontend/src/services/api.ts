@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { AuthResponse, Booking, Business, Service, User } from '../types';
+import { AuthResponse, Booking, Business, Review, Service, User } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 
@@ -133,6 +133,16 @@ class ApiService {
     return data;
   }
 
+  async completeBooking(id: string): Promise<Booking> {
+    const { data } = await this.client.patch<Booking>(`/bookings/${id}/complete`);
+    return data;
+  }
+
+  async getBusinessBookings(businessId: string): Promise<Booking[]> {
+    const { data } = await this.client.get<Booking[]>(`/bookings/business/${businessId}`);
+    return data;
+  }
+
   async getAvailableSlots(businessId: string, serviceId: string, date: string): Promise<string[]> {
     const { data } = await this.client.get<string[]>('/bookings/available-slots', {
       params: { businessId, serviceId, date },
@@ -178,13 +188,18 @@ class ApiService {
   }
 
   // Reviews
-  async getBusinessReviews(businessId: string): Promise<unknown[]> {
-    const { data } = await this.client.get(`/reviews/business/${businessId}`);
+  async getBusinessReviews(businessId: string): Promise<Review[]> {
+    const { data } = await this.client.get<Review[]>(`/reviews/business/${businessId}`);
     return data;
   }
 
-  async createReview(payload: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post('/reviews', payload);
+  async createReview(payload: { businessId: string; rating: number; comment?: string; appointmentId?: string }): Promise<Review> {
+    const { data } = await this.client.post<Review>('/reviews', payload);
+    return data;
+  }
+
+  async respondToReview(reviewId: string, text: string): Promise<Review> {
+    const { data } = await this.client.post<Review>(`/reviews/${reviewId}/respond`, { text });
     return data;
   }
 

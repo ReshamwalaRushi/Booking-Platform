@@ -20,6 +20,7 @@ import { BusinessServicesPage } from './pages/business/BusinessServicesPage';
 import { BusinessStaffPage } from './pages/business/BusinessStaffPage';
 import { BusinessProfilePage } from './pages/business/BusinessProfilePage';
 import { ClientProfilePage } from './pages/client/ClientProfilePage';
+import { LandingPage } from './pages/landing/LandingPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -31,8 +32,9 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
 }
 
-function RootRedirect() {
-  const { user } = useAuth();
+function AuthRedirect() {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <LandingPage />;
   if (user?.role === UserRole.ADMIN) return <Navigate to="/admin/dashboard" replace />;
   if (user?.role === UserRole.BUSINESS_OWNER) return <Navigate to="/business/dashboard" replace />;
   return <Navigate to="/dashboard" replace />;
@@ -41,10 +43,13 @@ function RootRedirect() {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<AuthRedirect />} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route index element={<RootRedirect />} />
+      <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+      </Route>
+      <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="bookings" element={<BookingsPage />} />

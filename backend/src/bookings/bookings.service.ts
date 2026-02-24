@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Booking, BookingDocument, BookingStatus } from './schemas/booking.schema';
@@ -6,6 +6,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { ServicesService } from '../services/services.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { BusinessesService } from '../businesses/businesses.service';
 
 @Injectable()
 export class BookingsService {
@@ -15,6 +16,7 @@ export class BookingsService {
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     private servicesService: ServicesService,
     private notificationsService: NotificationsService,
+    private businessesService: BusinessesService,
   ) {}
 
   async create(createBookingDto: CreateBookingDto, clientId: string): Promise<BookingDocument> {
@@ -58,7 +60,7 @@ export class BookingsService {
     return saved;
   }
 
-  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus }): Promise<BookingDocument[]> {
+  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus; ownerId?: string }): Promise<BookingDocument[]> {
     const query: any = {};
     if (filter?.clientId) query.client = new Types.ObjectId(filter.clientId);
     if (filter?.businessId) query.business = new Types.ObjectId(filter.businessId);
@@ -66,6 +68,20 @@ export class BookingsService {
 
     return this.bookingModel
       .find(query)
+      .populate('client', 'firstName lastName email phone')
+      .populate('business', 'name category')
+      .populate('service', 'name duration price')
+      .sort({ startTime: 1 })
+      .exec();
+  }
+
+  async findByBusiness(businessId: string, ownerId: string): Promise<BookingDocument[]> {
+    const businesses = await this.businessesService.findByOwner(ownerId);
+    const owned = businesses.find((b) => b._id.toString() === businessId);
+    if (!owned) throw new ForbiddenException('Not authorized to view bookings for this business');
+
+    return this.bookingModel
+      .find({ business: new Types.ObjectId(businessId) })
       .populate('client', 'firstName lastName email phone')
       .populate('business', 'name category')
       .populate('service', 'name duration price')
@@ -116,6 +132,30 @@ export class BookingsService {
           cancellationReason: reason,
           cancelledAt: new Date(),
         },
+        { new: true },
+      )
+      .exec();
+  }
+
+  async complete(id: string, ownerId: string): Promise<BookingDocument> {
+    const booking = await this.bookingModel.findById(id).populate('business').exec();
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    const business = booking.business as any;
+    if (business?.owner?.toString() !== ownerId) {
+      throw new ForbiddenException('Not authorized to complete this booking');
+    }
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      throw new BadRequestException('Only confirmed bookings can be marked as completed');
+    }
+    if (new Date(booking.endTime) > new Date()) {
+      throw new BadRequestException('Cannot complete a booking before its end time');
+    }
+
+    return this.bookingModel
+      .findByIdAndUpdate(
+        id,
+        { status: BookingStatus.COMPLETED, completedAt: new Date() },
         { new: true },
       )
       .exec();

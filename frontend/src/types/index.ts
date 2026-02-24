@@ -125,3 +125,16 @@ export interface ApiError {
   statusCode: number;
   error?: string;
 }
+
+export interface Review {
+  _id: string;
+  businessId: string | Business;
+  clientId: string | User;
+  appointmentId?: string | Booking;
+  rating: number;
+  comment?: string;
+  images?: string[];
+  response?: { text: string; respondedAt: string } | null;
+  isVisible: boolean;
+  createdAt: string;
+}

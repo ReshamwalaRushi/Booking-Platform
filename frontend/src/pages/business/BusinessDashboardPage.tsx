@@ -11,25 +11,41 @@ export function BusinessDashboardPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      const biz = await api.getMyBusinesses();
+      setBusinesses(biz);
+      if (biz.length > 0) {
+        const allBookings = await api.getBusinessBookings(biz[0]._id);
+        setBookings(allBookings);
+      }
+    } catch {
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const biz = await api.getMyBusinesses();
-        setBusinesses(biz);
-        if (biz.length > 0) {
-          const allBookings = await api.getBookings({ businessId: biz[0]._id });
-          setBookings(allBookings);
-        }
-      } catch {
-        toast.error('Failed to load dashboard data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleComplete = async (bookingId: string) => {
+    setCompletingId(bookingId);
+    try {
+      const updated = await api.completeBooking(bookingId);
+      setBookings((prev) => prev.map((b) => (b._id === bookingId ? updated : b)));
+      toast.success('Appointment marked as completed!');
+    } catch {
+      toast.error('Failed to complete appointment');
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
+  const now = new Date();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -38,6 +54,10 @@ export function BusinessDashboardPage() {
   const todayBookings = bookings.filter((b) => {
     const d = new Date(b.startTime);
     return d >= today && d < tomorrow;
+  });
+
+  const pastConfirmedBookings = bookings.filter((b) => {
+    return b.status === BookingStatus.CONFIRMED && new Date(b.endTime) < now;
   });
 
   const totalRevenue = bookings
@@ -74,7 +94,7 @@ export function BusinessDashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Today's Appointments</h2>
           {todayBookings.length === 0 ? (
@@ -122,6 +142,36 @@ export function BusinessDashboardPage() {
           </div>
         </div>
       </div>
+
+      {pastConfirmedBookings.length > 0 && (
+        <div className="card">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Awaiting Completion</h2>
+          <p className="text-sm text-gray-500 mb-4">These appointments have passed — mark them as completed to update your revenue stats.</p>
+          <ul className="divide-y divide-gray-100">
+            {pastConfirmedBookings.map((b) => (
+              <li key={b._id} className="py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {typeof b.client === 'object' ? `${b.client.firstName} ${b.client.lastName}` : 'Client'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(b.startTime).toLocaleDateString()} &mdash;{' '}
+                    {typeof b.service === 'object' ? b.service.name : 'Service'} &mdash;{' '}
+                    ${b.amount?.toFixed(2)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleComplete(b._id)}
+                  disabled={completingId === b._id}
+                  className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {completingId === b._id ? 'Saving…' : '✅ Mark Complete'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

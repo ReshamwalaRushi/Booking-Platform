@@ -32,6 +32,12 @@ export class BookingsController {
     return this.bookingsService.findAll({ clientId: user.userId, status, businessId });
   }
 
+  @Get('business/:businessId')
+  @ApiOperation({ summary: 'Get all bookings for a business (business owner only)' })
+  findByBusiness(@Param('businessId') businessId: string, @CurrentUser() user: any) {
+    return this.bookingsService.findByBusiness(businessId, user.userId);
+  }
+
   @Get('available-slots')
   @ApiOperation({ summary: 'Get available time slots' })
   @ApiQuery({ name: 'businessId', required: true })
@@ -55,6 +61,12 @@ export class BookingsController {
   @ApiOperation({ summary: 'Update booking status' })
   update(@Param('id') id: string, @Body() updateDto: UpdateBookingDto) {
     return this.bookingsService.update(id, updateDto);
+  }
+
+  @Patch(':id/complete')
+  @ApiOperation({ summary: 'Mark booking as completed (business owner only)' })
+  complete(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.bookingsService.complete(id, user.userId);
   }
 
   @Delete(':id')
