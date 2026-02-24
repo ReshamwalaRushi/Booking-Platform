@@ -47,7 +47,7 @@ export function Sidebar() {
     <>
       {/* Mobile toggle button */}
       <button
-        className="md:hidden fixed bottom-4 right-4 z-50 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center"
+        className="md:hidden fixed bottom-4 right-4 z-50 w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full shadow-lg flex items-center justify-center"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle navigation"
       >
@@ -75,14 +75,14 @@ export function Sidebar() {
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         <div className="p-4">
-          <div className="mb-6 p-3 bg-primary-50 rounded-lg">
+          <div className="mb-6 p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold border border-white/30">
                 {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+                <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-blue-100 capitalize">{user?.role?.replace('_', ' ')}</p>
               </div>
             </div>
           </div>
@@ -93,9 +93,9 @@ export function Sidebar() {
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-primary-100 text-primary-700'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`
                 }

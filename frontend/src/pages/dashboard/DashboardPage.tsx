@@ -46,10 +46,10 @@ export function DashboardPage() {
     .slice(0, 4);
 
   const statCards = [
-    { label: 'Total Bookings', value: stats.total, color: 'bg-primary-50 text-primary-700', icon: '📅' },
-    { label: 'Upcoming', value: stats.upcoming, color: 'bg-blue-50 text-blue-700', icon: '⏰' },
-    { label: 'Completed', value: stats.completed, color: 'bg-green-50 text-green-700', icon: '✅' },
-    { label: 'Cancelled', value: stats.cancelled, color: 'bg-red-50 text-red-700', icon: '❌' },
+    { label: 'Total Bookings', value: stats.total, cardClass: 'stat-card-purple', icon: '📅' },
+    { label: 'Upcoming', value: stats.upcoming, cardClass: 'stat-card-blue', icon: '⏰' },
+    { label: 'Completed', value: stats.completed, cardClass: 'stat-card-green', icon: '✅' },
+    { label: 'Cancelled', value: stats.cancelled, cardClass: 'stat-card-orange', icon: '❌' },
   ];
 
   return (
@@ -73,10 +73,10 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((stat) => (
-          <div key={stat.label} className={`card ${stat.color}`}>
+          <div key={stat.label} className={stat.cardClass}>
             <div className="text-2xl mb-1">{stat.icon}</div>
             <div className="text-3xl font-bold mb-1">{isLoading ? '—' : stat.value}</div>
-            <div className="text-sm font-medium opacity-80">{stat.label}</div>
+            <div className="text-sm font-medium opacity-90">{stat.label}</div>
           </div>
         ))}
       </div>

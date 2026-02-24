@@ -51,10 +51,10 @@ export function AdminDashboardPage() {
   };
 
   const statCards = [
-    { label: 'Total Businesses', value: stats.totalBusinesses ?? '—', color: 'bg-blue-50 text-blue-700', icon: '🏢' },
-    { label: 'Total Clients', value: stats.totalClients ?? '—', color: 'bg-green-50 text-green-700', icon: '👥' },
-    { label: 'Total Bookings', value: stats.totalBookings ?? '—', color: 'bg-primary-50 text-primary-700', icon: '📅' },
-    { label: 'Revenue', value: stats.totalRevenue != null ? `$${Number(stats.totalRevenue).toFixed(2)}` : '—', color: 'bg-yellow-50 text-yellow-700', icon: '💰' },
+    { label: 'Total Businesses', value: stats.totalBusinesses ?? '—', cardClass: 'stat-card-blue', icon: '🏢', pct: 72 },
+    { label: 'Total Clients', value: stats.totalClients ?? '—', cardClass: 'stat-card-green', icon: '👥', pct: 85 },
+    { label: 'Total Bookings', value: stats.totalBookings ?? '—', cardClass: 'stat-card-purple', icon: '📅', pct: 91 },
+    { label: 'Revenue', value: stats.totalRevenue != null ? `$${Number(stats.totalRevenue).toFixed(2)}` : '—', cardClass: 'stat-card-orange', icon: '💰', pct: 64 },
   ];
 
   if (isLoading) return <LoadingSpinner className="py-20" />;
@@ -68,10 +68,13 @@ export function AdminDashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((s) => (
-          <div key={s.label} className={`card ${s.color}`}>
+          <div key={s.label} className={s.cardClass}>
             <div className="text-2xl mb-1">{s.icon}</div>
             <div className="text-3xl font-bold mb-1">{String(s.value)}</div>
-            <div className="text-sm font-medium opacity-80">{s.label}</div>
+            <div className="text-sm font-medium opacity-90 mb-3">{s.label}</div>
+            <div className="w-full bg-white/20 rounded-full h-1.5">
+              <div className="bg-white/80 h-1.5 rounded-full" style={{ width: `${s.pct}%` }} />
+            </div>
           </div>
         ))}
       </div>
