@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
+import toast from 'react-hot-toast';
 
 const NAV_LINKS = [
   { label: 'Home', href: '#home' },
@@ -66,14 +69,57 @@ const STATS = [
 ];
 
 export function LandingPage() {
+  const navigate = useNavigate();
+  const { login, register, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactSent, setContactSent] = useState(false);
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
+
+  // Login modal state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Register modal state
+  const [regForm, setRegForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    phone: '',
+    role: UserRole.CLIENT,
+  });
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setContactSent(true);
   };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await login(loginEmail, loginPassword);
+      toast.success('Welcome back!');
+      setAuthModal(null);
+      navigate('/dashboard');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Invalid credentials');
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await register(regForm);
+      toast.success('Account created successfully!');
+      setAuthModal(null);
+      navigate('/dashboard');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Registration failed');
+    }
+  };
+
+  const closeModal = () => setAuthModal(null);
 
   return (
     <div className="min-h-screen bg-white">
@@ -102,12 +148,18 @@ export function LandingPage() {
 
             {/* Auth buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Link to="/login" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors px-4 py-2">
+              <button
+                onClick={() => setAuthModal('login')}
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors px-4 py-2"
+              >
                 Log in
-              </Link>
-              <Link to="/register" className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity shadow-sm">
+              </button>
+              <button
+                onClick={() => setAuthModal('register')}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+              >
                 Get Started Free
-              </Link>
+              </button>
             </div>
 
             {/* Mobile hamburger */}
@@ -142,10 +194,10 @@ export function LandingPage() {
                 </a>
               ))}
               <div className="pt-2 border-t border-gray-100 flex flex-col gap-2 px-4">
-                <Link to="/login" className="block text-center py-2 text-gray-700 font-medium">Log in</Link>
-                <Link to="/register" className="block text-center py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg">
+                <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="block text-center py-2 text-gray-700 font-medium">Log in</button>
+                <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="block text-center py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg">
                   Get Started Free
-                </Link>
+                </button>
               </div>
             </div>
           )}
@@ -170,12 +222,12 @@ export function LandingPage() {
               The all-in-one booking platform for salons, clinics, consultants, and every service business. Accept bookings 24/7, automate reminders, and grow your revenue.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
+              <button
+                onClick={() => setAuthModal('register')}
                 className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
                 Start for Free →
-              </Link>
+              </button>
               <a
                 href="#features"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-800 text-lg font-semibold rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
@@ -286,15 +338,15 @@ export function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/register"
-                  className={`block text-center py-3 px-6 rounded-xl font-semibold transition-all ${plan.highlight
+                <button
+                  onClick={() => setAuthModal('register')}
+                  className={`block w-full text-center py-3 px-6 rounded-xl font-semibold transition-all ${plan.highlight
                     ? 'bg-white text-blue-600 hover:bg-blue-50'
                     : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90'
                   }`}
                 >
                   {plan.cta}
-                </Link>
+                </button>
               </div>
             ))}
           </div>
@@ -314,9 +366,9 @@ export function LandingPage() {
                 Our mission is to help every service business — no matter the size — offer a seamless booking experience that keeps clients coming back.
               </p>
               <div className="flex gap-4">
-                <Link to="/register" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity">
+                <button onClick={() => setAuthModal('register')} className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity">
                   Join BookEase →
-                </Link>
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -436,6 +488,186 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      {authModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={closeModal}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal tabs */}
+            <div className="flex border-b border-gray-100">
+              <button
+                onClick={() => setAuthModal('login')}
+                className={`flex-1 py-4 text-sm font-semibold transition-colors ${authModal === 'login' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setAuthModal('register')}
+                className={`flex-1 py-4 text-sm font-semibold transition-colors ${authModal === 'register' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Create Account
+              </button>
+              <button onClick={closeModal} className="px-4 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {authModal === 'login' ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+                    <p className="text-gray-500 text-sm mt-1">Sign in to your BookEase account</p>
+                  </div>
+                  <form onSubmit={handleLoginSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                      <input
+                        type="email"
+                        required
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        className="input-field"
+                        placeholder="john@example.com"
+                        autoComplete="email"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="input-field"
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
+                    >
+                      {isLoading ? 'Signing in…' : 'Sign In'}
+                    </button>
+                  </form>
+                  <p className="text-center text-sm text-gray-500 mt-4">
+                    Don't have an account?{' '}
+                    <button onClick={() => setAuthModal('register')} className="text-blue-600 hover:text-blue-700 font-medium">Create one free</button>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Create account</h2>
+                    <p className="text-gray-500 text-sm mt-1">Join BookEase today</p>
+                  </div>
+                  <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+                        <input
+                          type="text"
+                          required
+                          value={regForm.firstName}
+                          onChange={(e) => setRegForm({ ...regForm, firstName: e.target.value })}
+                          className="input-field"
+                          placeholder="John"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+                        <input
+                          type="text"
+                          required
+                          value={regForm.lastName}
+                          onChange={(e) => setRegForm({ ...regForm, lastName: e.target.value })}
+                          className="input-field"
+                          placeholder="Doe"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                      <input
+                        type="email"
+                        required
+                        value={regForm.email}
+                        onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                        className="input-field"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        value={regForm.password}
+                        onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                        className="input-field"
+                        placeholder="Min. 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
+                      <input
+                        type="tel"
+                        value={regForm.phone}
+                        onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                        className="input-field"
+                        placeholder="+1 234 567 8900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">I am a</label>
+                      <select
+                        value={regForm.role}
+                        onChange={(e) => setRegForm({ ...regForm, role: e.target.value as UserRole })}
+                        className="input-field"
+                      >
+                        <option value={UserRole.CLIENT}>Client (looking to book)</option>
+                        <option value={UserRole.BUSINESS_OWNER}>Business Owner (offering services)</option>
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
+                    >
+                      {isLoading ? 'Creating account…' : 'Create Account'}
+                    </button>
+                  </form>
+                  <p className="text-center text-sm text-gray-500 mt-4">
+                    Already have an account?{' '}
+                    <button onClick={() => setAuthModal('login')} className="text-blue-600 hover:text-blue-700 font-medium">Sign in</button>
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

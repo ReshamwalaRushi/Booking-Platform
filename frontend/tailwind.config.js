@@ -17,6 +17,24 @@ module.exports = {
           900: '#312E81',
         },
       },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+        gradient: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+      },
+      animation: {
+        float: 'float 3s ease-in-out infinite',
+        gradient: 'gradient 6s ease infinite',
+      },
+      backgroundSize: {
+        '200%': '200%',
+      },
     },
   },
   plugins: [],
