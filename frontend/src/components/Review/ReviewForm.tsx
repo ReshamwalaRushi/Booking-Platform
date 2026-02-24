@@ -54,7 +54,7 @@ export function ReviewForm({ businessId, appointmentId, onSuccess, onCancel }: R
         </div>
         {rating > 0 && (
           <p className="text-xs text-gray-500 mt-1">
-            {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
+            {({ 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent' } as Record<number, string>)[rating]}
           </p>
         )}
       </div>

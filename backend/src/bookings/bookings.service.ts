@@ -60,7 +60,7 @@ export class BookingsService {
     return saved;
   }
 
-  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus; ownerId?: string }): Promise<BookingDocument[]> {
+  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus }): Promise<BookingDocument[]> {
     const query: any = {};
     if (filter?.clientId) query.client = new Types.ObjectId(filter.clientId);
     if (filter?.businessId) query.business = new Types.ObjectId(filter.businessId);

@@ -13,24 +13,23 @@ export function BusinessDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    try {
-      const biz = await api.getMyBusinesses();
-      setBusinesses(biz);
-      if (biz.length > 0) {
-        const allBookings = await api.getBusinessBookings(biz[0]._id);
-        setBookings(allBookings);
-      }
-    } catch {
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const biz = await api.getMyBusinesses();
+        setBusinesses(biz);
+        if (biz.length > 0) {
+          const allBookings = await api.getBusinessBookings(biz[0]._id);
+          setBookings(allBookings);
+        }
+      } catch {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleComplete = async (bookingId: string) => {
     setCompletingId(bookingId);
@@ -45,7 +44,7 @@ export function BusinessDashboardPage() {
     }
   };
 
-  const now = new Date();
+  const currentDateTime = new Date();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -57,7 +56,7 @@ export function BusinessDashboardPage() {
   });
 
   const pastConfirmedBookings = bookings.filter((b) => {
-    return b.status === BookingStatus.CONFIRMED && new Date(b.endTime) < now;
+    return b.status === BookingStatus.CONFIRMED && new Date(b.endTime) < currentDateTime;
   });
 
   const totalRevenue = bookings
