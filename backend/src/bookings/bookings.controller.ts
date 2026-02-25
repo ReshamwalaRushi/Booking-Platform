@@ -69,6 +69,12 @@ export class BookingsController {
     return this.bookingsService.complete(id, user.userId);
   }
 
+  @Patch(':id/reschedule')
+  @ApiOperation({ summary: 'Reschedule a booking' })
+  reschedule(@Param('id') id: string, @Body('startTime') startTime: string, @CurrentUser() user: any) {
+    return this.bookingsService.reschedule(id, startTime, user.userId);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Cancel a booking' })
   @ApiQuery({ name: 'reason', required: false })

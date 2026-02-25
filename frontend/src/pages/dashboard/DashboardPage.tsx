@@ -70,10 +70,10 @@ export function DashboardPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="badge-glow text-xs">Client Dashboard</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mt-2">
+          <h1 className="text-3xl font-bold text-theme-primary mt-2">
             {greeting}, <span className="gradient-text">{user?.firstName}</span>! 👋
           </h1>
-          <p className="text-slate-400 mt-1">Here's what's happening with your bookings today.</p>
+          <p className="text-theme-secondary mt-1">Here's what's happening with your bookings today.</p>
         </div>
         <Link to="/bookings/new">
           <Button size="lg">
@@ -105,7 +105,7 @@ export function DashboardPage() {
         {/* Upcoming bookings */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">Upcoming Bookings</h2>
+            <h2 className="text-lg font-bold text-theme-primary">Upcoming Bookings</h2>
             <Link to="/bookings" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               View all →
             </Link>
@@ -115,7 +115,7 @@ export function DashboardPage() {
           ) : upcomingBookings.length === 0 ? (
             <div className="card text-center py-10">
               <div className="text-4xl mb-3">📭</div>
-              <p className="text-slate-400 mb-4">No upcoming bookings yet</p>
+              <p className="text-theme-secondary mb-4">No upcoming bookings yet</p>
               <Link to="/bookings/new">
                 <Button size="sm">Book Now</Button>
               </Link>
@@ -127,7 +127,7 @@ export function DashboardPage() {
 
         {/* Quick actions */}
         <div>
-          <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-bold text-theme-primary mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((action) => (
               <Link key={action.to} to={action.to}>
@@ -141,8 +141,8 @@ export function DashboardPage() {
                   >
                     {action.emoji}
                   </div>
-                  <p className="font-semibold text-white text-sm">{action.label}</p>
-                  <p className="text-xs text-slate-400 mt-1">{action.desc}</p>
+                  <p className="font-semibold text-theme-primary text-sm">{action.label}</p>
+                  <p className="text-xs text-theme-secondary mt-1">{action.desc}</p>
                 </div>
               </Link>
             ))}

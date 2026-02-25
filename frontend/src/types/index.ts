@@ -138,3 +138,28 @@ export interface Review {
   isVisible: boolean;
   createdAt: string;
 }
+
+export interface Staff {
+  _id: string;
+  businessId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  avatar?: string;
+  bio?: string;
+  assignedServices: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PaymentTransaction {
+  bookingId: string;
+  serviceName: string;
+  businessName: string;
+  amount: number;
+  currency: string;
+  paymentStatus: PaymentStatus;
+  startTime: string;
+  createdAt: string;
+}

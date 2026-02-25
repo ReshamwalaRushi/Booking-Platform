@@ -17,19 +17,30 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
     primary: 'text-white focus:ring-indigo-500 hover:-translate-y-0.5',
-    secondary: 'bg-slate-700/60 hover:bg-slate-700 text-slate-200 border border-slate-600 focus:ring-indigo-500',
+    secondary: 'focus:ring-indigo-500',
     danger: 'bg-red-600/90 hover:bg-red-600 text-white focus:ring-red-500',
-    ghost: 'text-slate-300 hover:text-white hover:bg-white/10 focus:ring-slate-500',
+    ghost: 'focus:ring-indigo-500',
   };
 
-  const primaryStyle = variant === 'primary' ? {
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    boxShadow: '0 4px 15px rgba(99,102,241,.4)',
-  } : undefined;
+  const variantStyles: Record<string, React.CSSProperties> = {
+    primary: {
+      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+      boxShadow: '0 4px 15px rgba(99,102,241,.4)',
+    },
+    secondary: {
+      background: 'rgba(99,102,241,.1)',
+      border: '1px solid rgba(99,102,241,.3)',
+      color: 'var(--text-secondary)',
+    },
+    danger: {},
+    ghost: {
+      color: 'var(--text-secondary)',
+    },
+  };
 
   const sizeClasses = {
     sm: 'text-xs px-3 py-1.5',
@@ -40,7 +51,7 @@ export function Button({
   return (
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      style={primaryStyle}
+      style={variantStyles[variant]}
       disabled={disabled || isLoading}
       {...props}
     >

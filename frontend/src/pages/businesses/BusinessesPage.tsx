@@ -31,8 +31,8 @@ export function BusinessesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Businesses</h1>
-        <p className="text-gray-600 mt-1">Find the perfect service provider</p>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Businesses</h1>
+        <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>Find the perfect service provider</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">

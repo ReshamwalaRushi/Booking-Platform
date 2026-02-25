@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { AuthResponse, Booking, Business, Review, Service, User } from '../types';
+import { AuthResponse, Booking, Business, Review, Service, Staff, User } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 
@@ -122,6 +122,8 @@ class ApiService {
     serviceId: string;
     startTime: string;
     notes?: string;
+    staffId?: string;
+    paymentOption?: 'full' | 'deposit' | 'pay_later';
   }): Promise<Booking> {
     const { data } = await this.client.post<Booking>('/bookings', payload);
     return data;
@@ -155,9 +157,24 @@ class ApiService {
     return data;
   }
 
+  async rescheduleBooking(id: string, startTime: string): Promise<Booking> {
+    const { data } = await this.client.patch<Booking>(`/bookings/${id}/reschedule`, { startTime });
+    return data;
+  }
+
   // Payments
   async createPaymentIntent(bookingId: string, amount: number): Promise<{ client_secret: string }> {
     const { data } = await this.client.post('/payments/create-intent', { bookingId, amount });
+    return data;
+  }
+
+  async createRazorpayOrder(bookingId: string, amount: number, currency: string): Promise<{ orderId: string; amount: number; currency: string; keyId: string }> {
+    const { data } = await this.client.post('/payments/razorpay/create-order', { bookingId, amount, currency });
+    return data;
+  }
+
+  async verifyRazorpayPayment(payload: { bookingId: string; razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }): Promise<{ success: boolean }> {
+    const { data } = await this.client.post('/payments/razorpay/verify', payload);
     return data;
   }
 
@@ -168,18 +185,18 @@ class ApiService {
   }
 
   // Staff
-  async getStaff(businessId: string): Promise<unknown[]> {
-    const { data } = await this.client.get('/staff', { params: { businessId } });
+  async getStaff(businessId: string): Promise<Staff[]> {
+    const { data } = await this.client.get<Staff[]>('/staff', { params: { businessId } });
     return data;
   }
 
-  async createStaff(payload: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post('/staff', payload);
+  async createStaff(payload: Record<string, unknown>): Promise<Staff> {
+    const { data } = await this.client.post<Staff>('/staff', payload);
     return data;
   }
 
-  async updateStaff(id: string, payload: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.patch(`/staff/${id}`, payload);
+  async updateStaff(id: string, payload: Record<string, unknown>): Promise<Staff> {
+    const { data } = await this.client.patch<Staff>(`/staff/${id}`, payload);
     return data;
   }
 

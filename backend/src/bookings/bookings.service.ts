@@ -58,9 +58,19 @@ export class BookingsService {
       // Real-time notification to the client
       this.notificationsGateway.notifyUser(clientId, {
         type: 'new_booking',
-        message: 'Your booking has been created successfully!',
+        message: `Your booking for "${service.name}" has been created successfully!`,
         data: { bookingId: saved._id.toString() },
       });
+      // Real-time notification to the business owner
+      const businessDoc = await this.businessesService.findOne(saved.business.toString());
+      if (businessDoc?.owner) {
+        const ownerId = businessDoc.owner.toString();
+        this.notificationsGateway.notifyUser(ownerId, {
+          type: 'new_booking_received',
+          message: `New booking received for "${service.name}"`,
+          data: { bookingId: saved._id.toString() },
+        });
+      }
     } catch (err) {
       this.logger.warn(`Notification failed for booking ${saved._id}: ${err.message}`);
     }
@@ -120,6 +130,42 @@ export class BookingsService {
     }
 
     return this.bookingModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+  }
+
+  async reschedule(id: string, newStartTime: string, clientId: string): Promise<BookingDocument> {
+    const booking = await this.bookingModel.findById(id);
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.client.toString() !== clientId) {
+      throw new BadRequestException('Not authorized to reschedule this booking');
+    }
+    if (![BookingStatus.PENDING, BookingStatus.CONFIRMED].includes(booking.status)) {
+      throw new BadRequestException('Only pending or confirmed bookings can be rescheduled');
+    }
+
+    const service = await this.servicesService.findOne(booking.service.toString());
+    const startTime = new Date(newStartTime);
+    const endTime = new Date(startTime.getTime() + service.duration * 60000);
+
+    const conflicting = await this.bookingModel.findOne({
+      _id: { $ne: booking._id },
+      business: booking.business,
+      service: booking.service,
+      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      $or: [
+        { startTime: { $lt: endTime, $gte: startTime } },
+        { endTime: { $gt: startTime, $lte: endTime } },
+      ],
+    });
+
+    if (conflicting) {
+      throw new BadRequestException('The selected time slot is not available');
+    }
+
+    return this.bookingModel.findByIdAndUpdate(
+      id,
+      { startTime, endTime },
+      { new: true },
+    ).exec();
   }
 
   async cancel(id: string, clientId: string, reason?: string): Promise<BookingDocument> {

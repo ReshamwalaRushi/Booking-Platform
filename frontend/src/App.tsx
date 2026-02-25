@@ -22,6 +22,7 @@ import { BusinessStaffPage } from './pages/business/BusinessStaffPage';
 import { BusinessProfilePage } from './pages/business/BusinessProfilePage';
 import { ClientProfilePage } from './pages/client/ClientProfilePage';
 import { LandingPage } from './pages/landing/LandingPage';
+import { PaymentHistoryPage } from './pages/payments/PaymentHistoryPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -68,6 +69,7 @@ function AppRoutes() {
         <Route path="business/profile" element={<BusinessProfilePage />} />
         {/* Client routes */}
         <Route path="client/profile" element={<ClientProfilePage />} />
+        <Route path="payments/history" element={<PaymentHistoryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
