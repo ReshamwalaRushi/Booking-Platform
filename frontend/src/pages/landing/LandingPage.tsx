@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { UserRole } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -70,6 +71,7 @@ const STATS = [
 export function LandingPage() {
   const navigate = useNavigate();
   const { login, register, isLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactSent, setContactSent] = useState(false);
@@ -119,7 +121,7 @@ export function LandingPage() {
   const closeModal = () => setAuthModal(null);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #080d1a 0%, #0a0f1e 100%)' }}>
+    <div className="min-h-screen hero-bg" style={{ color: 'var(--text-primary)' }}>
 
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 nav-dark">
@@ -148,6 +150,23 @@ export function LandingPage() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg transition-all duration-200"
+                style={{ color: 'var(--text-secondary)', background: 'rgba(99,102,241,.08)' }}
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
               <button onClick={() => setAuthModal('login')} className="btn-ghost text-sm">Log in</button>
               <button onClick={() => setAuthModal('register')} className="btn-primary text-sm px-5 py-2">Get Started Free →</button>
             </div>

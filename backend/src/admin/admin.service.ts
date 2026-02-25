@@ -1,26 +1,72 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Business, BusinessDocument } from '../businesses/schemas/business.schema';
+import { Booking, BookingDocument, BookingStatus } from '../bookings/schemas/booking.schema';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Business.name) private businessModel: Model<BusinessDocument>,
+    @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
   ) {}
 
   async getDashboardStats(): Promise<object> {
-    const [totalUsers, totalBusinesses, totalActive] = await Promise.all([
-      this.userModel.countDocuments(),
-      this.businessModel.countDocuments(),
-      this.userModel.countDocuments({ isActive: true }),
+    const [totalUsers, totalBusinesses, totalActive, totalBookings, revenueAgg, bookingsByStatus] =
+      await Promise.all([
+        this.userModel.countDocuments(),
+        this.businessModel.countDocuments(),
+        this.userModel.countDocuments({ isActive: true }),
+        this.bookingModel.countDocuments(),
+        this.bookingModel.aggregate([
+          { $match: { status: BookingStatus.COMPLETED } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ]),
+        this.bookingModel.aggregate([
+          { $group: { _id: '$status', count: { $sum: 1 } } },
+        ]),
+      ]);
+
+    const totalRevenue = revenueAgg[0]?.total ?? 0;
+    const statusMap: Record<string, number> = {};
+    for (const s of bookingsByStatus) statusMap[s._id] = s.count;
+
+    // Monthly bookings for the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyAgg = await this.bookingModel.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+          count: { $sum: 1 },
+          revenue: { $sum: { $cond: [{ $eq: ['$status', BookingStatus.COMPLETED] }, '$amount', 0] } },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = monthlyAgg.map((m) => ({
+      month: monthNames[m._id.month - 1],
+      bookings: m.count,
+      revenue: m.revenue,
+    }));
+
     return {
       totalUsers,
       totalBusinesses,
       totalActiveUsers: totalActive,
+      totalClients: await this.userModel.countDocuments({ role: 'client' }),
+      totalBookings,
+      totalRevenue,
+      bookingsByStatus: statusMap,
+      monthlyData,
       timestamp: new Date().toISOString(),
     };
   }
