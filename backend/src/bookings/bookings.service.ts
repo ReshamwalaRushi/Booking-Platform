@@ -6,6 +6,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { ServicesService } from '../services/services.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { BusinessesService } from '../businesses/businesses.service';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class BookingsService {
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     private servicesService: ServicesService,
     private notificationsService: NotificationsService,
+    private notificationsGateway: NotificationsGateway,
     private businessesService: BusinessesService,
   ) {}
 
@@ -53,6 +55,12 @@ export class BookingsService {
 
     try {
       await this.notificationsService.sendBookingConfirmation(saved._id.toString());
+      // Real-time notification to the client
+      this.notificationsGateway.notifyUser(clientId, {
+        type: 'new_booking',
+        message: 'Your booking has been created successfully!',
+        data: { bookingId: saved._id.toString() },
+      });
     } catch (err) {
       this.logger.warn(`Notification failed for booking ${saved._id}: ${err.message}`);
     }

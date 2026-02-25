@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -15,6 +16,7 @@ import { ZoomModule } from './zoom/zoom.module';
 import { StaffModule } from './staff/staff.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { AdminModule } from './admin/admin.module';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     BusinessesModule,
@@ -41,6 +44,7 @@ import { AdminModule } from './admin/admin.module';
     StaffModule,
     ReviewsModule,
     AdminModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
