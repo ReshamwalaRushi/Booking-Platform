@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar';
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a0f1e 100%)' }}>
       <Navbar />
       <div className="flex pt-16">
         <Sidebar />

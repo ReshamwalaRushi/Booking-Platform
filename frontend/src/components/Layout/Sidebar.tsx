@@ -38,16 +38,24 @@ function getNavItems(role?: UserRole): NavItem[] {
   return clientNavItems;
 }
 
+const roleLabel: Record<string, string> = {
+  admin: 'Administrator',
+  business_owner: 'Business Owner',
+  client: 'Client',
+};
+
 export function Sidebar() {
   const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navItems = getNavItems(user?.role);
+  const roleDisplay = roleLabel[user?.role ?? 'client'] ?? 'User';
 
   return (
     <>
-      {/* Mobile toggle button */}
+      {/* Mobile toggle */}
       <button
-        className="md:hidden fixed bottom-4 right-4 z-50 w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full shadow-lg flex items-center justify-center"
+        className="md:hidden fixed bottom-5 right-5 z-50 w-13 h-13 p-3 text-white rounded-2xl shadow-xl transition-all"
+        style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 8px 25px rgba(99,102,241,.5)' }}
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle navigation"
       >
@@ -64,49 +72,65 @@ export function Sidebar() {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/40 z-40"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-40 transition-transform duration-300 ${
-        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      }`}>
-        <div className="p-4">
-          <div className="mb-6 p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
+      <aside
+        className={`sidebar-dark fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 overflow-y-auto z-40 transition-transform duration-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        <div className="p-4 flex flex-col h-full">
+          {/* User profile chip */}
+          <div
+            className="mb-6 p-4 rounded-2xl relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,.2) 0%, rgba(139,92,246,.2) 100%)', border: '1px solid rgba(99,102,241,.3)' }}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold border border-white/30">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 12px rgba(99,102,241,.4)' }}
+              >
                 {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
               </div>
-              <div>
-                <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-blue-100 capitalize">{user?.role?.replace('_', ' ')}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-indigo-300 mt-0.5">{roleDisplay}</p>
               </div>
             </div>
+            {/* decorative orb */}
+            <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #818cf8, transparent)' }} />
           </div>
-          <nav className="space-y-1">
+
+          {/* Navigation */}
+          <nav className="space-y-1 flex-1">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-3">Navigation</p>
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'nav-item-active text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-white/8'
                   }`
                 }
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d={item.icon} />
                 </svg>
                 {item.label}
               </NavLink>
             ))}
           </nav>
+
+          {/* Footer */}
+          <div className="pt-4 border-t border-white/5">
+            <p className="text-xs text-slate-600 text-center">BookEase © 2025</p>
+          </div>
         </div>
       </aside>
     </>
