@@ -14,6 +14,13 @@ interface Stats {
   cancelled: number;
 }
 
+const quickActions = [
+  { to: '/bookings/new', emoji: '📅', label: 'Book Appointment', desc: 'Schedule a new booking', color: '#6366f1' },
+  { to: '/businesses', emoji: '🏢', label: 'Browse Businesses', desc: 'Find service providers', color: '#8b5cf6' },
+  { to: '/calendar', emoji: '📆', label: 'View Calendar', desc: 'See your schedule', color: '#06b6d4' },
+  { to: '/bookings', emoji: '📋', label: 'My Bookings', desc: 'Manage your bookings', color: '#10b981' },
+];
+
 export function DashboardPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -45,6 +52,9 @@ export function DashboardPage() {
     .filter((b) => [BookingStatus.PENDING, BookingStatus.CONFIRMED].includes(b.status) && new Date(b.startTime) > new Date())
     .slice(0, 4);
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
   const statCards = [
     { label: 'Total Bookings', value: stats.total, cardClass: 'stat-card-purple', icon: '📅' },
     { label: 'Upcoming', value: stats.upcoming, cardClass: 'stat-card-blue', icon: '⏰' },
@@ -53,16 +63,20 @@ export function DashboardPage() {
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {user?.firstName}! 👋
+          <div className="flex items-center gap-2 mb-1">
+            <span className="badge-glow text-xs">Client Dashboard</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white mt-2">
+            {greeting}, <span className="gradient-text">{user?.firstName}</span>! 👋
           </h1>
-          <p className="text-gray-600 mt-1">Here's what's happening with your bookings</p>
+          <p className="text-slate-400 mt-1">Here's what's happening with your bookings today.</p>
         </div>
         <Link to="/bookings/new">
-          <Button>
+          <Button size="lg">
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -71,27 +85,37 @@ export function DashboardPage() {
         </Link>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((stat) => (
-          <div key={stat.label} className={stat.cardClass}>
-            <div className="text-2xl mb-1">{stat.icon}</div>
-            <div className="text-3xl font-bold mb-1">{isLoading ? '—' : stat.value}</div>
-            <div className="text-sm font-medium opacity-90">{stat.label}</div>
+          <div key={stat.label} className={`${stat.cardClass} relative overflow-hidden`}>
+            <div className="text-2xl mb-2">{stat.icon}</div>
+            <div className="text-4xl font-extrabold mb-1 tracking-tight">
+              {isLoading ? <span className="opacity-40">—</span> : stat.value}
+            </div>
+            <div className="text-sm font-medium opacity-80">{stat.label}</div>
+            {/* decorative circle */}
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/10" />
           </div>
         ))}
       </div>
 
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upcoming bookings */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Upcoming Bookings</h2>
-            <Link to="/bookings" className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all</Link>
+            <h2 className="text-lg font-bold text-white">Upcoming Bookings</h2>
+            <Link to="/bookings" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              View all →
+            </Link>
           </div>
           {isLoading ? (
             <LoadingSpinner className="py-8" />
           ) : upcomingBookings.length === 0 ? (
-            <div className="card text-center py-8">
-              <p className="text-gray-500 mb-4">No upcoming bookings</p>
+            <div className="card text-center py-10">
+              <div className="text-4xl mb-3">📭</div>
+              <p className="text-slate-400 mb-4">No upcoming bookings yet</p>
               <Link to="/bookings/new">
                 <Button size="sm">Book Now</Button>
               </Link>
@@ -101,20 +125,24 @@ export function DashboardPage() {
           )}
         </div>
 
+        {/* Quick actions */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { to: '/bookings/new', icon: '📅', label: 'Book Appointment', desc: 'Schedule a new booking' },
-              { to: '/businesses', icon: '🏢', label: 'Browse Businesses', desc: 'Find service providers' },
-              { to: '/calendar', icon: '📆', label: 'View Calendar', desc: 'See your schedule' },
-              { to: '/bookings', icon: '📋', label: 'My Bookings', desc: 'Manage your bookings' },
-            ].map((action) => (
+            {quickActions.map((action) => (
               <Link key={action.to} to={action.to}>
-                <div className="card hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer h-full">
-                  <div className="text-2xl mb-2">{action.icon}</div>
-                  <p className="font-medium text-gray-900 text-sm">{action.label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{action.desc}</p>
+                <div
+                  className="card-modern cursor-pointer h-full group"
+                  style={{ borderColor: `${action.color}25` }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `${action.color}20` }}
+                  >
+                    {action.emoji}
+                  </div>
+                  <p className="font-semibold text-white text-sm">{action.label}</p>
+                  <p className="text-xs text-slate-400 mt-1">{action.desc}</p>
                 </div>
               </Link>
             ))}

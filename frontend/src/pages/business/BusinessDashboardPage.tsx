@@ -6,6 +6,13 @@ import { Booking, Business, BookingStatus } from '../../types';
 import api from '../../services/api';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 
+const quickActions = [
+  { to: '/business/services', emoji: '🛎️', label: 'Manage Services', desc: 'Add or edit services', color: '#8b5cf6' },
+  { to: '/business/staff', emoji: '👤', label: 'Manage Staff', desc: 'View your team', color: '#06b6d4' },
+  { to: '/calendar', emoji: '📆', label: 'View Calendar', desc: 'See your schedule', color: '#10b981' },
+  { to: '/bookings', emoji: '📋', label: 'All Bookings', desc: 'Manage bookings', color: '#6366f1' },
+];
+
 export function BusinessDashboardPage() {
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -73,45 +80,67 @@ export function BusinessDashboardPage() {
   if (isLoading) return <LoadingSpinner className="py-20" />;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.firstName}! 👋</h1>
-          <p className="text-gray-600 mt-1">
+          <span className="badge-glow text-xs">Business Dashboard</span>
+          <h1 className="text-3xl font-bold text-white mt-3">
+            Welcome back, <span className="gradient-text">{user?.firstName}</span>! 👋
+          </h1>
+          <p className="text-slate-400 mt-1">
             {businesses.length > 0 ? businesses[0].name : 'Your business dashboard'}
           </p>
         </div>
+        <Link to="/business/profile">
+          <button className="btn-secondary flex items-center gap-2 text-sm">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Settings
+          </button>
+        </Link>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((s) => (
-          <div key={s.label} className={s.cardClass}>
-            <div className="text-2xl mb-1">{s.icon}</div>
-            <div className="text-3xl font-bold mb-1">{String(s.value)}</div>
-            <div className="text-sm font-medium opacity-90">{s.label}</div>
+          <div key={s.label} className={`${s.cardClass} relative overflow-hidden`}>
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-4xl font-extrabold mb-1 tracking-tight">{String(s.value)}</div>
+            <div className="text-sm font-medium opacity-80">{s.label}</div>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/10" />
           </div>
         ))}
       </div>
 
+      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Today's Appointments</h2>
+        {/* Today's appointments */}
+        <div className="card-glow">
+          <h2 className="text-lg font-bold text-white mb-4">Today's Appointments</h2>
           {todayBookings.length === 0 ? (
-            <p className="text-gray-500 text-sm py-4 text-center">No appointments today</p>
+            <div className="text-center py-8">
+              <div className="text-3xl mb-2">🗓️</div>
+              <p className="text-slate-400 text-sm">No appointments today — enjoy your day!</p>
+            </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-white/8">
               {todayBookings.slice(0, 5).map((b) => (
-                <li key={b._id} className="py-3 flex items-center justify-between">
+                <li key={b._id} className="py-3.5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-semibold text-white">
                       {typeof b.client === 'object' ? `${b.client.firstName} ${b.client.lastName}` : 'Client'}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {new Date(b.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    b.status === BookingStatus.CONFIRMED ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                    b.status === BookingStatus.CONFIRMED
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
                   }`}>
                     {b.status}
                   </span>
@@ -121,20 +150,24 @@ export function BusinessDashboardPage() {
           )}
         </div>
 
+        {/* Quick actions */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { to: '/business/services', icon: '🛎️', label: 'Manage Services', desc: 'Add or edit services' },
-              { to: '/business/staff', icon: '👤', label: 'Manage Staff', desc: 'View your team' },
-              { to: '/calendar', icon: '📆', label: 'View Calendar', desc: 'See your schedule' },
-              { to: '/bookings', icon: '📋', label: 'All Bookings', desc: 'Manage bookings' },
-            ].map((action) => (
+            {quickActions.map((action) => (
               <Link key={action.to} to={action.to}>
-                <div className="card hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer h-full">
-                  <div className="text-2xl mb-2">{action.icon}</div>
-                  <p className="font-medium text-gray-900 text-sm">{action.label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{action.desc}</p>
+                <div
+                  className="card-modern cursor-pointer h-full group"
+                  style={{ borderColor: `${action.color}25` }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: `${action.color}20` }}
+                  >
+                    {action.emoji}
+                  </div>
+                  <p className="font-semibold text-white text-sm">{action.label}</p>
+                  <p className="text-xs text-slate-400 mt-1">{action.desc}</p>
                 </div>
               </Link>
             ))}
@@ -142,27 +175,30 @@ export function BusinessDashboardPage() {
         </div>
       </div>
 
+      {/* Awaiting completion */}
       {pastConfirmedBookings.length > 0 && (
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Awaiting Completion</h2>
-          <p className="text-sm text-gray-500 mb-4">These appointments have passed — mark them as completed to update your revenue stats.</p>
-          <ul className="divide-y divide-gray-100">
+        <div className="card-glow">
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-lg font-bold text-white">Awaiting Completion</h2>
+            <span className="badge-glow text-xs">{pastConfirmedBookings.length}</span>
+          </div>
+          <p className="text-sm text-slate-400 mb-5">These appointments have passed — mark them complete to update revenue stats.</p>
+          <ul className="divide-y divide-white/8">
             {pastConfirmedBookings.map((b) => (
-              <li key={b._id} className="py-3 flex items-center justify-between">
+              <li key={b._id} className="py-3.5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-semibold text-white">
                     {typeof b.client === 'object' ? `${b.client.firstName} ${b.client.lastName}` : 'Client'}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(b.startTime).toLocaleDateString()} &mdash;{' '}
-                    {typeof b.service === 'object' ? b.service.name : 'Service'} &mdash;{' '}
-                    ${b.amount?.toFixed(2)}
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {new Date(b.startTime).toLocaleDateString()} · {typeof b.service === 'object' ? b.service.name : 'Service'} · ${b.amount?.toFixed(2)}
                   </p>
                 </div>
                 <button
                   onClick={() => handleComplete(b._id)}
                   disabled={completingId === b._id}
-                  className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-xl text-white disabled:opacity-50 transition-all hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 12px rgba(16,185,129,.3)' }}
                 >
                   {completingId === b._id ? 'Saving…' : '✅ Mark Complete'}
                 </button>

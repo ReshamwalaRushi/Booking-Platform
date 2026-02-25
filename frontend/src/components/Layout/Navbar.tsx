@@ -13,32 +13,52 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 fixed top-0 w-full z-40 shadow-sm">
+    <nav className="nav-dark fixed top-0 w-full z-40 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+          >
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">BookEase</span>
+          <span
+            className="text-lg font-bold bg-clip-text text-transparent"
+            style={{ backgroundImage: 'linear-gradient(135deg, #818cf8 0%, #c084fc 100%)' }}
+          >
+            BookEase
+          </span>
         </Link>
 
+        {/* Right section */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <span className="text-sm text-gray-600 hidden sm:block">
-                Hello, <span className="font-medium text-gray-800">{user?.firstName}</span>
-              </span>
+              {/* User chip */}
+              <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+                >
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </div>
+                <span className="text-sm text-slate-300 font-medium">{user?.firstName}</span>
+              </div>
+
+              {/* Notification bell */}
               <button
-                className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
+                className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 aria-label="Notifications"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">3</span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full ring-2 ring-slate-900" />
               </button>
+
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
@@ -46,7 +66,7 @@ export function Navbar() {
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost" size="sm">Login</Button>
+                <Button variant="ghost" size="sm">Log in</Button>
               </Link>
               <Link to="/register">
                 <Button size="sm">Get Started</Button>
