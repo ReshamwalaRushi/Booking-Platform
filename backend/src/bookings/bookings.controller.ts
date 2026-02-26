@@ -29,7 +29,8 @@ export class BookingsController {
     @Query('status') status?: BookingStatus,
     @Query('businessId') businessId?: string,
   ) {
-    return this.bookingsService.findAll({ clientId: user.userId, status, businessId });
+    status = !status ? BookingStatus.PENDING : status;
+    return this.bookingsService.findAll({ status, businessId });
   }
 
   @Get('business/:businessId')
