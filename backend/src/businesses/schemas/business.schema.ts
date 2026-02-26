@@ -74,6 +74,18 @@ export class Business {
 
   @Prop({ default: 0 })
   totalReviews: number;
+
+  @Prop({
+    type: Object,
+    default: {
+      onlinePayment: true,
+      cashPayment: true,
+    },
+  })
+  paymentOptions: {
+    onlinePayment: boolean;
+    cashPayment: boolean;
+  };
 }
 
 export const BusinessSchema = SchemaFactory.createForClass(Business);

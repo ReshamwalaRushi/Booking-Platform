@@ -67,6 +67,10 @@ export interface Business {
   rating: number;
   totalReviews: number;
   createdAt: string;
+  paymentOptions?: {
+    onlinePayment: boolean;
+    cashPayment: boolean;
+  };
 }
 
 export interface Service {
@@ -90,6 +94,7 @@ export interface Booking {
   client: User | string;
   business: Business | string;
   service: Service | string;
+  staff?: Staff | string;
   startTime: string;
   endTime: string;
   status: BookingStatus;
@@ -107,6 +112,8 @@ export interface Booking {
   cancelledAt?: string;
   confirmedAt?: string;
   createdAt: string;
+  bookingNumber?: string;
+  paymentMethod?: string;
 }
 
 export interface AuthResponse {
