@@ -145,10 +145,10 @@ class ApiService {
     return data;
   }
 
-  async getAvailableSlots(businessId: string, serviceId: string, date: string): Promise<string[]> {
-    const { data } = await this.client.get<string[]>('/bookings/available-slots', {
-      params: { businessId, serviceId, date },
-    });
+  async getAvailableSlots(businessId: string, serviceId: string, date: string, staffId?: string): Promise<{ slot: string; availableStaff: number }[]> {
+    const params: Record<string, string> = { businessId, serviceId, date };
+    if (staffId) params.staffId = staffId;
+    const { data } = await this.client.get<{ slot: string; availableStaff: number }[]>('/bookings/available-slots', { params });
     return data;
   }
 
@@ -159,6 +159,25 @@ class ApiService {
 
   async rescheduleBooking(id: string, startTime: string): Promise<Booking> {
     const { data } = await this.client.patch<Booking>(`/bookings/${id}/reschedule`, { startTime });
+    return data;
+  }
+
+  async confirmBooking(id: string): Promise<Booking> {
+    const { data } = await this.client.patch<Booking>(`/bookings/${id}/confirm`);
+    return data;
+  }
+
+  async markBookingAsPaid(id: string, paymentMethod?: string): Promise<Booking> {
+    const { data } = await this.client.patch<Booking>(`/bookings/${id}/mark-paid`, { paymentMethod });
+    return data;
+  }
+
+  downloadBookingReceipt(id: string): string {
+    return `${API_BASE_URL}/bookings/${id}/receipt`;
+  }
+
+  async getStaffCount(businessId: string): Promise<{ count: number; limit: number }> {
+    const { data } = await this.client.get<{ count: number; limit: number }>('/staff/count', { params: { businessId } });
     return data;
   }
 

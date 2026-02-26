@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BookingStatus } from '../schemas/booking.schema';
+import { BookingStatus, PaymentStatus } from '../schemas/booking.schema';
 
 export class UpdateBookingDto {
   @ApiPropertyOptional({ enum: BookingStatus })
@@ -17,4 +17,14 @@ export class UpdateBookingDto {
   @IsOptional()
   @IsString()
   cancellationReason?: string;
+
+  @ApiPropertyOptional({ enum: PaymentStatus })
+  @IsOptional()
+  @IsEnum(PaymentStatus)
+  paymentStatus?: PaymentStatus;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
 }

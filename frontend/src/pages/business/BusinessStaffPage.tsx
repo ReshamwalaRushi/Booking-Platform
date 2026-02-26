@@ -7,6 +7,8 @@ import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 
+const STAFF_LIMIT = 5;
+
 interface StaffMember {
   _id: string;
   firstName: string;
@@ -62,8 +64,8 @@ export function BusinessStaffPage() {
       toast.success('Staff member added');
       setModalOpen(false);
       setForm(emptyForm);
-    } catch {
-      toast.error('Failed to add staff member');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to add staff member');
     } finally {
       setIsSaving(false);
     }
@@ -80,6 +82,8 @@ export function BusinessStaffPage() {
     }
   };
 
+  const isAtLimit = staff.length >= STAFF_LIMIT;
+
   if (isLoading) return <LoadingSpinner className="py-20" />;
 
   return (
@@ -89,12 +93,42 @@ export function BusinessStaffPage() {
           <h1 className="text-2xl font-bold text-gray-900">Staff</h1>
           <p className="text-gray-600 mt-1">Manage your team members</p>
         </div>
-        <Button onClick={() => { setForm(emptyForm); setModalOpen(true); }}>
+        <Button
+          onClick={() => { setForm(emptyForm); setModalOpen(true); }}
+          disabled={isAtLimit}
+          title={isAtLimit ? `Free plan allows up to ${STAFF_LIMIT} staff members` : undefined}
+        >
           <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Add Staff
         </Button>
+      </div>
+
+      {/* Staff count progress */}
+      <div className="mb-6 p-4 rounded-xl border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Staff Members ({staff.length} / {STAFF_LIMIT})
+          </span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(99,102,241,.1)', color: '#6366f1' }}>
+            Free Plan
+          </span>
+        </div>
+        <div className="w-full rounded-full h-2" style={{ background: 'rgba(99,102,241,.15)' }}>
+          <div
+            className="h-2 rounded-full transition-all"
+            style={{
+              width: `${(staff.length / STAFF_LIMIT) * 100}%`,
+              background: isAtLimit ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            }}
+          />
+        </div>
+        {isAtLimit && (
+          <p className="text-xs mt-2" style={{ color: '#ef4444' }}>
+            ⚠️ Staff limit reached. Upgrade your plan to add more staff members.
+          </p>
+        )}
       </div>
 
       {staff.length === 0 ? (

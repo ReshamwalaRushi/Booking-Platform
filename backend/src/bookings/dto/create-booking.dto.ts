@@ -33,4 +33,9 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   paymentMethodId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
 }

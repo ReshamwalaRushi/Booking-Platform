@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button';
 import { BookingStatus, Booking, Service, Business } from '../../types';
 import { Modal } from '../../components/common/Modal';
 import api from '../../services/api';
+import { formatCurrency } from '../../utils/currency';
 import toast from 'react-hot-toast';
 
 type TabType = 'upcoming' | 'past' | 'all';
@@ -16,63 +17,15 @@ const TABS: { label: string; value: TabType; emoji: string }[] = [
   { label: 'All', value: 'all', emoji: '📋' },
 ];
 
-function generateInvoiceHTML(booking: Booking): string {
-  const service = booking.service as Service;
-  const business = booking.business as Business;
-  const startTime = new Date(booking.startTime);
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Invoice - ${booking._id}</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #1e1b4b; }
-          .header { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white; padding: 24px; border-radius: 12px 12px 0 0; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .header p { margin: 4px 0 0; opacity: .8; font-size: 13px; }
-          .body { background: #f9fafb; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; }
-          table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-          td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
-          td:first-child { font-weight: 600; color: #6366f1; width: 40%; }
-          .total { font-size: 18px; font-weight: bold; color: #6366f1; text-align: right; margin-top: 16px; }
-          .status { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #d1fae5; color: #065f46; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>📅 Booking Receipt</h1>
-          <p>Invoice #${booking._id.slice(-8).toUpperCase()}</p>
-        </div>
-        <div class="body">
-          <table>
-            <tr><td>Business</td><td>${business?.name || 'N/A'}</td></tr>
-            <tr><td>Service</td><td>${service?.name || 'N/A'}</td></tr>
-            <tr><td>Date</td><td>${format(startTime, 'MMMM dd, yyyy')}</td></tr>
-            <tr><td>Time</td><td>${format(startTime, 'h:mm a')}</td></tr>
-            <tr><td>Duration</td><td>${service?.duration || 0} minutes</td></tr>
-            <tr><td>Status</td><td><span class="status">${booking.status}</span></td></tr>
-            <tr><td>Payment</td><td>${booking.paymentStatus}</td></tr>
-          </table>
-          <div class="total">Total: ${booking.currency} ${((booking.amount || 0) / 100).toFixed(2)}</div>
-          <p style="font-size:12px;color:#6b7280;margin-top:24px;">Generated on ${new Date().toLocaleString()} • BookEase Platform</p>
-        </div>
-      </body>
-    </html>
-  `;
-}
-
 function downloadInvoice(booking: Booking) {
-  const html = generateInvoiceHTML(booking);
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
+  // Use the backend PDF endpoint
+  const url = api.downloadBookingReceipt(booking._id);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `invoice-${booking._id.slice(-8).toUpperCase()}.html`;
+  a.download = `receipt-${booking.bookingNumber || booking._id.slice(-8).toUpperCase()}.pdf`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 export function BookingsPage() {
@@ -81,7 +34,7 @@ export function BookingsPage() {
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSlot, setRescheduleSlot] = useState('');
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<{ slot: string; availableStaff: number }[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isRescheduling, setIsRescheduling] = useState(false);
 
@@ -219,6 +172,11 @@ export function BookingsPage() {
                       }`}>
                         {booking.status}
                       </span>
+                      {booking.bookingNumber && (
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(99,102,241,.1)', color: '#6366f1' }}>
+                          {booking.bookingNumber}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{business?.name || 'Business'}</p>
                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -236,7 +194,7 @@ export function BookingsPage() {
                       </div>
                       <div>
                         <p style={{ color: 'var(--text-muted)' }}>Amount</p>
-                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{booking.currency} {((booking.amount || 0) / 100).toFixed(2)}</p>
+                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{formatCurrency(booking.amount || 0)}</p>
                       </div>
                     </div>
                     {booking.notes && (
@@ -327,7 +285,7 @@ export function BookingsPage() {
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No available slots for this date</p>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
-                  {availableSlots.map((slot) => (
+                  {availableSlots.map(({ slot, availableStaff }) => (
                     <button
                       key={slot}
                       type="button"
@@ -339,7 +297,12 @@ export function BookingsPage() {
                       }`}
                       style={rescheduleSlot !== slot ? { background: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border)' } : {}}
                     >
-                      {format(new Date(slot), 'h:mm a')}
+                      <div>{format(new Date(slot), 'h:mm a')}</div>
+                      {availableStaff > 0 && (
+                        <div className={`text-xs mt-0.5 ${rescheduleSlot === slot ? 'text-white/80' : 'text-green-600'}`}>
+                          {availableStaff} avail
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>

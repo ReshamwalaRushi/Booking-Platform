@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Service } from '../../types';
 import api from '../../services/api';
+import { formatCurrency } from '../../utils/currency';
 import { Button } from '../common/Button';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -45,7 +46,7 @@ const PAYMENT_OPTIONS: { value: PaymentOption; label: string; desc: string; emoj
 export function BookingForm({ businessId, service, staffId, onSuccess, onCancel }: BookingFormProps) {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<{ slot: string; availableStaff: number }[]>([]);
   const [notes, setNotes] = useState('');
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('pay_later');
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -66,7 +67,7 @@ export function BookingForm({ businessId, service, staffId, onSuccess, onCancel 
     const fetchSlots = async () => {
       setIsLoadingSlots(true);
       try {
-        const slots = await api.getAvailableSlots(businessId, service._id, selectedDate);
+        const slots = await api.getAvailableSlots(businessId, service._id, selectedDate, staffId);
         setAvailableSlots(slots);
       } catch {
         setAvailableSlots([]);
@@ -75,7 +76,7 @@ export function BookingForm({ businessId, service, staffId, onSuccess, onCancel 
       }
     };
     fetchSlots();
-  }, [selectedDate, businessId, service._id]);
+  }, [selectedDate, businessId, service._id, staffId]);
 
   const handleRazorpayPayment = async (booking: any): Promise<boolean> => {
     const loaded = await loadRazorpayScript();
@@ -153,7 +154,7 @@ export function BookingForm({ businessId, service, staffId, onSuccess, onCancel 
       <div className="rounded-lg p-4" style={{ background: 'rgba(99,102,241,.08)', border: '1px solid rgba(99,102,241,.2)' }}>
         <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>{service.name}</h4>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          {service.duration} min • {service.currency} {(service.price / 100).toFixed(2)}
+          {service.duration} min • {formatCurrency(service.price)}
         </p>
       </div>
 
@@ -183,19 +184,24 @@ export function BookingForm({ businessId, service, staffId, onSuccess, onCancel 
             <p className="text-sm py-2" style={{ color: 'var(--text-secondary)' }}>No available slots for this date</p>
           ) : (
             <div className="grid grid-cols-3 gap-2">
-              {availableSlots.map((slot) => (
+              {availableSlots.map(({ slot, availableStaff }) => (
                 <button
                   key={slot}
                   type="button"
                   onClick={() => setSelectedSlot(slot)}
-                  className={`py-2 px-3 text-sm rounded-lg border transition-all ${
+                  className={`py-2 px-3 text-sm rounded-lg border transition-all relative ${
                     selectedSlot === slot
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : ''
                   }`}
                   style={selectedSlot !== slot ? { background: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border)' } : {}}
                 >
-                  {format(new Date(slot), 'h:mm a')}
+                  <div>{format(new Date(slot), 'h:mm a')}</div>
+                  {availableStaff > 0 && (
+                    <div className={`text-xs mt-0.5 ${selectedSlot === slot ? 'text-white/80' : 'text-green-600'}`}>
+                      {availableStaff} avail
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -240,9 +246,7 @@ export function BookingForm({ businessId, service, staffId, onSuccess, onCancel 
               </div>
               {opt.value !== 'pay_later' && (
                 <span className="text-sm font-bold" style={{ color: '#6366f1' }}>
-                  {service.currency} {(
-                    (opt.value === 'deposit' ? depositAmount : service.price) / 100
-                  ).toFixed(2)}
+                  {formatCurrency(opt.value === 'deposit' ? depositAmount : service.price)}
                 </span>
               )}
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentOption === opt.value ? 'border-indigo-500 bg-indigo-500' : ''}`} style={paymentOption !== opt.value ? { borderColor: 'var(--border)' } : {}}>

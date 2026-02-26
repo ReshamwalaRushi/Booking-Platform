@@ -82,6 +82,15 @@ export class Booking {
 
   @Prop()
   completedAt: Date;
+
+  @Prop({ unique: true, sparse: true })
+  bookingNumber: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Staff' })
+  staff: Types.ObjectId;
+
+  @Prop()
+  paymentMethod: string;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);

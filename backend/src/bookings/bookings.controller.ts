@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Response } from 'express';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -24,19 +25,26 @@ export class BookingsController {
   @ApiOperation({ summary: 'Get bookings for current user' })
   @ApiQuery({ name: 'status', required: false, enum: BookingStatus })
   @ApiQuery({ name: 'businessId', required: false })
+  @ApiQuery({ name: 'bookingNumber', required: false })
   findMy(
     @CurrentUser() user: any,
     @Query('status') status?: BookingStatus,
     @Query('businessId') businessId?: string,
+    @Query('bookingNumber') bookingNumber?: string,
   ) {
     status = !status ? BookingStatus.PENDING : status;
-    return this.bookingsService.findAll({ status, businessId });
+    return this.bookingsService.findAll({ status, businessId, bookingNumber });
   }
 
   @Get('business/:businessId')
   @ApiOperation({ summary: 'Get all bookings for a business (business owner only)' })
-  findByBusiness(@Param('businessId') businessId: string, @CurrentUser() user: any) {
-    return this.bookingsService.findByBusiness(businessId, user.userId);
+  @ApiQuery({ name: 'search', required: false })
+  findByBusiness(
+    @Param('businessId') businessId: string,
+    @CurrentUser() user: any,
+    @Query('search') search?: string,
+  ) {
+    return this.bookingsService.findByBusiness(businessId, user.userId, search);
   }
 
   @Get('available-slots')
@@ -44,12 +52,28 @@ export class BookingsController {
   @ApiQuery({ name: 'businessId', required: true })
   @ApiQuery({ name: 'serviceId', required: true })
   @ApiQuery({ name: 'date', required: true })
+  @ApiQuery({ name: 'staffId', required: false })
   getAvailableSlots(
     @Query('businessId') businessId: string,
     @Query('serviceId') serviceId: string,
     @Query('date') date: string,
+    @Query('staffId') staffId?: string,
   ) {
-    return this.bookingsService.getAvailableSlots(businessId, serviceId, date);
+    return this.bookingsService.getAvailableSlots(businessId, serviceId, date, staffId);
+  }
+
+  @Get(':id/receipt')
+  @ApiOperation({ summary: 'Download PDF receipt for a booking' })
+  async downloadReceipt(@Param('id') id: string, @Res() res: Response) {
+    const pdfBuffer = await this.bookingsService.generatePdfReceipt(id);
+    const booking = await this.bookingsService.findOne(id);
+    const filename = `receipt-${(booking as any).bookingNumber || id.slice(-8)}.pdf`;
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.end(pdfBuffer);
   }
 
   @Get(':id')
@@ -62,6 +86,22 @@ export class BookingsController {
   @ApiOperation({ summary: 'Update booking status' })
   update(@Param('id') id: string, @Body() updateDto: UpdateBookingDto) {
     return this.bookingsService.update(id, updateDto);
+  }
+
+  @Patch(':id/confirm')
+  @ApiOperation({ summary: 'Confirm a booking (business owner only)' })
+  confirm(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.bookingsService.confirm(id, user.userId);
+  }
+
+  @Patch(':id/mark-paid')
+  @ApiOperation({ summary: 'Mark booking as paid (business owner only)' })
+  markAsPaid(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Body('paymentMethod') paymentMethod?: string,
+  ) {
+    return this.bookingsService.markAsPaid(id, user.userId, paymentMethod);
   }
 
   @Patch(':id/complete')

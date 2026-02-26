@@ -20,6 +20,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class StaffController {
   constructor(private readonly staffService: StaffService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('count')
+  @ApiOperation({ summary: 'Get staff count and limit for a business' })
+  @ApiQuery({ name: 'businessId', required: true })
+  getStaffCount(@Query('businessId') businessId: string) {
+    return this.staffService.getStaffCount(businessId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all staff for a business' })
   @ApiQuery({ name: 'businessId', required: true })
