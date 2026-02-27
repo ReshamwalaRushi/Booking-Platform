@@ -26,7 +26,7 @@ import { PaymentHistoryPage } from './pages/payments/PaymentHistoryPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
