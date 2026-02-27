@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Business, Review, Service } from '../../types';
+import { Business, Review, Service, Staff } from '../../types';
 import api from '../../services/api';
 import { ServiceCard } from '../../components/Service/ServiceCard';
 import { BookingForm } from '../../components/Booking/BookingForm';
@@ -46,6 +46,10 @@ export function BusinessDetailPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null | undefined>(undefined);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+  const [showStaffSelection, setShowStaffSelection] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
@@ -78,6 +82,36 @@ export function BusinessDetailPage() {
     const newVal = toggleFavorite(id);
     setFavorited(newVal);
     toast.success(newVal ? 'Added to favorites!' : 'Removed from favorites');
+  };
+
+  const handleServiceSelect = async (service: Service) => {
+    setSelectedService(service);
+    setSelectedStaff(undefined);
+    setShowStaffSelection(true);
+    if (!business) return;
+    setIsLoadingStaff(true);
+    try {
+      const staff = await api.getStaff(business._id);
+      const assignedStaff = staff.filter((s) =>
+        !s.assignedServices?.length || s.assignedServices.includes(service._id)
+      );
+      setStaffList(assignedStaff.filter((s) => s.isActive));
+    } catch {
+      setStaffList([]);
+    } finally {
+      setIsLoadingStaff(false);
+    }
+  };
+
+  const handleStaffSelect = (staff: Staff | null) => {
+    setSelectedStaff(staff);
+    setShowStaffSelection(false);
+  };
+
+  const handleCloseBooking = () => {
+    setSelectedService(null);
+    setSelectedStaff(undefined);
+    setShowStaffSelection(false);
   };
 
   if (isLoading) return <LoadingSpinner className="py-20" />;
@@ -157,7 +191,7 @@ export function BusinessDetailPage() {
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {services.map((service) => (
-            <ServiceCard key={service._id} service={service} onBook={setSelectedService} />
+            <ServiceCard key={service._id} service={service} onBook={handleServiceSelect} />
           ))}
         </div>
       )}
@@ -187,19 +221,79 @@ export function BusinessDetailPage() {
         <ReviewList reviews={reviews} />
       </div>
 
+      {/* Staff Selection Modal */}
       <Modal
-        isOpen={!!selectedService}
-        onClose={() => setSelectedService(null)}
+        isOpen={showStaffSelection}
+        onClose={handleCloseBooking}
+        title="Choose Your Staff"
+        size="md"
+      >
+        {isLoadingStaff ? (
+          <div className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>Loading staff...</div>
+        ) : (
+          <div>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              {selectedService?.name} at {business.name}
+            </p>
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+              <button
+                onClick={() => handleStaffSelect(null)}
+                className="card text-center hover:shadow-md transition-all border-2 hover:border-indigo-400 py-4"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-2 mx-auto" style={{ background: 'rgba(99,102,241,.12)' }}>
+                  🎲
+                </div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No Preference</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Any available</p>
+              </button>
+              {staffList.map((staff) => (
+                <button
+                  key={staff._id}
+                  onClick={() => handleStaffSelect(staff)}
+                  className="card text-center hover:shadow-md transition-all border-2 hover:border-indigo-400 py-4"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold mb-2 mx-auto text-white" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+                    {staff.firstName.charAt(0)}{staff.lastName.charAt(0)}
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{staff.firstName} {staff.lastName}</p>
+                  {staff.bio && <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{staff.bio}</p>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Booking Form Modal */}
+      <Modal
+        isOpen={!!selectedService && !showStaffSelection && selectedStaff !== undefined}
+        onClose={handleCloseBooking}
         title="Book Appointment"
         size="md"
       >
-        {selectedService && (
-          <BookingForm
-            businessId={business._id}
-            service={selectedService}
-            onSuccess={() => { setSelectedService(null); navigate('/bookings'); }}
-            onCancel={() => setSelectedService(null)}
-          />
+        {selectedService && selectedStaff !== undefined && (
+          <div>
+            {selectedStaff && (
+              <div className="flex items-center gap-2 mb-4 p-3 rounded-lg" style={{ background: 'rgba(99,102,241,.08)' }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}>
+                  {selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}
+                </div>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  with {selectedStaff.firstName} {selectedStaff.lastName}
+                </p>
+                <button className="ml-auto text-xs underline" style={{ color: '#6366f1' }} onClick={() => setShowStaffSelection(true)}>Change</button>
+              </div>
+            )}
+            <BookingForm
+              businessId={business._id}
+              service={selectedService}
+              staffId={selectedStaff?._id}
+              onSuccess={() => { handleCloseBooking(); navigate('/bookings'); }}
+              onCancel={handleCloseBooking}
+            />
+          </div>
         )}
       </Modal>
     </div>
