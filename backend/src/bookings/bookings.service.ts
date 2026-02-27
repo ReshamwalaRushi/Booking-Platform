@@ -9,6 +9,7 @@ import { ServicesService } from '../services/services.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { BusinessesService } from '../businesses/businesses.service';
+import { StaffService } from '../staff/staff.service';
 
 @Injectable()
 export class BookingsService {
@@ -20,6 +21,7 @@ export class BookingsService {
     private notificationsService: NotificationsService,
     private notificationsGateway: NotificationsGateway,
     private businessesService: BusinessesService,
+    private staffService: StaffService,
   ) {}
 
   private generateBookingNumber(): string {
@@ -241,11 +243,32 @@ export class BookingsService {
       throw new BadRequestException('The selected time slot is not available');
     }
 
-    return this.bookingModel.findByIdAndUpdate(
+    const updated = await this.bookingModel.findByIdAndUpdate(
       id,
       { startTime, endTime },
       { new: true },
     ).exec();
+
+    try {
+      const businessDoc = await this.businessesService.findOne(booking.business.toString());
+      const newTimeFormatted = startTime.toISOString();
+      this.notificationsGateway.notifyUser(clientId, {
+        type: 'booking_rescheduled',
+        message: `Your booking #${booking.bookingNumber || id.slice(-8)} has been rescheduled to ${newTimeFormatted}`,
+        data: { bookingId: id },
+      });
+      if (businessDoc?.owner) {
+        this.notificationsGateway.notifyUser(businessDoc.owner.toString(), {
+          type: 'booking_rescheduled',
+          message: `Booking #${booking.bookingNumber || id.slice(-8)} has been rescheduled to ${newTimeFormatted}`,
+          data: { bookingId: id },
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`Reschedule notification failed for booking ${id}: ${err.message}`);
+    }
+
+    return updated;
   }
 
   async cancel(id: string, clientId: string, reason?: string): Promise<BookingDocument> {
@@ -312,8 +335,12 @@ export class BookingsService {
 
     const existingBookings = await this.bookingModel.find(bookingQuery);
 
-    // Count total staff for the business
-    let totalStaff = 1; // Default to 1 if we can't get staff count
+    // Count total active staff for the business
+    const { count: totalStaff } = await this.staffService.getStaffCount(businessId);
+    if (totalStaff === 0) {
+      this.logger.warn(`Business ${businessId} has no active staff; defaulting to 1 for slot availability`);
+    }
+    const effectiveTotalStaff = totalStaff > 0 ? totalStaff : 1;
 
     const slots: { slot: string; availableStaff: number }[] = [];
     const slotDuration = service.duration * 60000;
@@ -334,13 +361,16 @@ export class BookingsService {
           slots.push({ slot: slotStart.toISOString(), availableStaff: 1 });
         }
       } else {
-        // Count bookings in this slot (per service, not per business)
+        // Count bookings in this slot across all staff
         const slotBookings = existingBookings.filter(
           (b) =>
             (b.startTime >= slotStart && b.startTime < slotEnd) ||
             (b.endTime > slotStart && b.endTime <= slotEnd),
         );
-        slots.push({ slot: slotStart.toISOString(), availableStaff: Math.max(0, totalStaff - slotBookings.length) });
+        const available = Math.max(0, effectiveTotalStaff - slotBookings.length);
+        if (available > 0) {
+          slots.push({ slot: slotStart.toISOString(), availableStaff: available });
+        }
       }
       current += slotDuration;
     }

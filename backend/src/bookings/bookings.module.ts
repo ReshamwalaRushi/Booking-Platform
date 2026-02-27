@@ -6,6 +6,7 @@ import { Booking, BookingSchema } from './schemas/booking.schema';
 import { ServicesModule } from '../services/services.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { BusinessesModule } from '../businesses/businesses.module';
+import { StaffModule } from '../staff/staff.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BusinessesModule } from '../businesses/businesses.module';
     ServicesModule,
     NotificationsModule,
     BusinessesModule,
+    StaffModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService],

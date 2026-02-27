@@ -1,6 +1,17 @@
-import { IsString, IsEnum, IsOptional, IsEmail } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsEmail, IsBoolean, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BusinessCategory } from '../schemas/business.schema';
+
+class PaymentOptionsDto {
+  @IsOptional()
+  @IsBoolean()
+  onlinePayment?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  cashPayment?: boolean;
+}
 
 export class CreateBusinessDto {
   @ApiProperty({ example: 'My Salon' })
@@ -43,4 +54,10 @@ export class CreateBusinessDto {
   @ApiPropertyOptional()
   @IsOptional()
   workingHours?: Record<string, { open: string; close: string; isOpen: boolean }>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PaymentOptionsDto)
+  paymentOptions?: PaymentOptionsDto;
 }

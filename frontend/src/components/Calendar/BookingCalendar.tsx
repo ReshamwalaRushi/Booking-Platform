@@ -1,16 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, getDay } from 'date-fns';
-import { Booking, BookingStatus, Service, Business } from '../../types';
+import { Booking, BookingStatus, Service, Business, Staff } from '../../types';
 import { Badge } from '../common/Badge';
 
 interface BookingCalendarProps {
   bookings: Booking[];
   onDateClick?: (date: Date) => void;
+  isBusinessOwner?: boolean;
+  onConfirmBooking?: (bookingId: string) => void;
 }
 
-export function BookingCalendar({ bookings, onDateClick }: BookingCalendarProps) {
+export function BookingCalendar({ bookings, onDateClick, isBusinessOwner, onConfirmBooking }: BookingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -35,6 +39,16 @@ export function BookingCalendar({ bookings, onDateClick }: BookingCalendarProps)
   const handleDateClick = (day: Date) => {
     setSelectedDate(day);
     onDateClick?.(day);
+  };
+
+  const handleConfirm = async (bookingId: string) => {
+    setConfirmModal(null);
+    setConfirmingId(bookingId);
+    try {
+      await onConfirmBooking?.(bookingId);
+    } finally {
+      setConfirmingId(null);
+    }
   };
 
   return (
@@ -113,6 +127,7 @@ export function BookingCalendar({ bookings, onDateClick }: BookingCalendarProps)
           {selectedDateBookings.map((booking) => {
             const service = booking.service as Service;
             const business = booking.business as Business;
+            const staff = booking.staff as Staff | undefined;
             return (
               <div key={booking._id} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
@@ -123,11 +138,49 @@ export function BookingCalendar({ bookings, onDateClick }: BookingCalendarProps)
                 <p className="text-xs text-gray-500 mt-1">
                   {format(new Date(booking.startTime), 'h:mm a')} – {format(new Date(booking.endTime), 'h:mm a')}
                 </p>
+                {booking.bookingNumber && (
+                  <p className="text-xs font-mono mt-1" style={{ color: '#6366f1' }}>#{booking.bookingNumber}</p>
+                )}
+                {staff && (
+                  <p className="text-xs mt-1 text-gray-600">
+                    👤 {(staff as Staff).firstName} {(staff as Staff).lastName}
+                  </p>
+                )}
+                {isBusinessOwner && booking.status === BookingStatus.PENDING && onConfirmBooking && (
+                  <button
+                    onClick={() => setConfirmModal(booking._id)}
+                    disabled={confirmingId === booking._id}
+                    className="mt-2 w-full text-xs font-semibold py-1.5 rounded-lg text-white disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+                  >
+                    {confirmingId === booking._id ? '…' : '✓ Confirm Booking'}
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setConfirmModal(null)}>
+          <div className="rounded-2xl p-6 w-80 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-2 text-gray-900">Confirm Booking?</h3>
+            <p className="text-sm mb-5 text-gray-600">This will confirm the booking and notify the client.</p>
+            <div className="flex gap-3">
+              <button className="flex-1 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700" onClick={() => setConfirmModal(null)}>Cancel</button>
+              <button
+                className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
+                style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+                onClick={() => handleConfirm(confirmModal)}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

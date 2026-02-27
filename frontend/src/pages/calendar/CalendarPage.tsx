@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBookings } from '../../hooks/useBookings';
 import { BookingCalendar } from '../../components/Calendar/BookingCalendar';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { Link } from 'react-router-dom';
-import { Button } from '../../components/common/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 export function CalendarPage() {
-  const { bookings, isLoading } = useBookings();
+  const { bookings, isLoading, refetch } = useBookings();
+  const { user } = useAuth();
+
+  const handleConfirmBooking = async (bookingId: string) => {
+    try {
+      await api.confirmBooking(bookingId);
+      toast.success('Booking confirmed!');
+      refetch();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to confirm booking');
+    }
+  };
 
   return (
     <div>
@@ -15,20 +28,16 @@ export function CalendarPage() {
           <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
           <p className="text-gray-600 mt-1">View and manage your schedule</p>
         </div>
-        <Link to="/bookings/new">
-          <Button>
-            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Booking
-          </Button>
-        </Link>
       </div>
 
       {isLoading ? (
         <LoadingSpinner className="py-20" />
       ) : (
-        <BookingCalendar bookings={bookings} />
+        <BookingCalendar
+          bookings={bookings}
+          isBusinessOwner={user?.role === UserRole.BUSINESS_OWNER}
+          onConfirmBooking={handleConfirmBooking}
+        />
       )}
     </div>
   );
