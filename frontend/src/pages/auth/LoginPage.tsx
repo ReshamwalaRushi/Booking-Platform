@@ -28,7 +28,10 @@ export function LoginPage() {
     try {
       await login(email, password);
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      const role = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string).role : null;
+      if (role === 'admin') navigate('/admin/dashboard');
+      else if (role === 'business_owner') navigate('/business/dashboard');
+      else navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Invalid credentials');
     }
