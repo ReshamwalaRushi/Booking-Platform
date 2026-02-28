@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Business, Service, BusinessCategory, Staff } from '../../types';
 import api from '../../services/api';
 import { BusinessList } from '../../components/Business/BusinessList';
@@ -12,6 +12,10 @@ type Step = 'business' | 'service' | 'staff' | 'booking';
 
 export function NewBookingPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillBusinessId = searchParams.get('businessId');
+  const prefillServiceId = searchParams.get('serviceId');
+
   const [step, setStep] = useState<Step>('business');
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -21,6 +25,34 @@ export function NewBookingPage() {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  // Pre-fill from URL params: load business → services → skip to staff step
+  useEffect(() => {
+    if (!prefillBusinessId || !prefillServiceId) return;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const [biz, svcs] = await Promise.all([
+          api.getBusiness(prefillBusinessId),
+          api.getServices(prefillBusinessId),
+        ]);
+        setSelectedBusiness(biz);
+        setServices(svcs);
+        const service = svcs.find((s) => s._id === prefillServiceId);
+        if (service) {
+          setSelectedService(service);
+          const staff = await api.getStaff(prefillBusinessId);
+          const assigned = staff.filter((s) => !s.assignedServices?.length || s.assignedServices.includes(service._id));
+          setStaffList(assigned.filter((s) => s.isActive));
+          setStep('staff');
+        }
+      } catch {
+        // fall through to normal flow
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [prefillBusinessId, prefillServiceId]);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
