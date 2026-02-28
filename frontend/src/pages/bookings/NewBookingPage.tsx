@@ -52,7 +52,6 @@ export function NewBookingPage() {
         setIsLoading(false);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillBusinessId, prefillServiceId]);
 
   useEffect(() => {

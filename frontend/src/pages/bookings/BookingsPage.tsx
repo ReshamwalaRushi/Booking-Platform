@@ -344,14 +344,17 @@ function BusinessBookingsView() {
 }
 
 /* ── Client View ── */
+const DEFAULT_FROM = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+const DEFAULT_TO = format(new Date(), 'yyyy-MM-dd');
+
 function ClientBookingsView() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | ''>('');
-  const [fromDate, setFromDate] = useState(() => format(subDays(new Date(), 7), 'yyyy-MM-dd'));
-  const [toDate, setToDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [fromDate, setFromDate] = useState(DEFAULT_FROM);
+  const [toDate, setToDate] = useState(DEFAULT_TO);
   const [page, setPage] = useState(1);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
@@ -382,8 +385,8 @@ function ClientBookingsView() {
 
   const clearFilters = () => {
     setSearch(''); setStatusFilter('');
-    setFromDate(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
-    setToDate(format(new Date(), 'yyyy-MM-dd'));
+    setFromDate(DEFAULT_FROM);
+    setToDate(DEFAULT_TO);
   };
 
   const handleCancelBooking = async (id: string) => {
@@ -476,7 +479,7 @@ function ClientBookingsView() {
             <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="input-field text-sm" />
           </div>
         </div>
-        {(search || statusFilter || fromDate !== format(subDays(new Date(), 7), 'yyyy-MM-dd') || toDate !== format(new Date(), 'yyyy-MM-dd')) && (
+        {(search || statusFilter || fromDate !== DEFAULT_FROM || toDate !== DEFAULT_TO) && (
           <button onClick={clearFilters} className="mt-2 text-sm" style={{ color: '#6366f1' }}>Reset Filters</button>
         )}
       </div>
