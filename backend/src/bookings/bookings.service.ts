@@ -107,32 +107,20 @@ export class BookingsService {
     return saved;
   }
 
-  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus; bookingNumber?: string; search?: string }): Promise<BookingDocument[]> {
+  async findAll(filter?: { clientId?: string; businessId?: string; status?: BookingStatus; bookingNumber?: string; search?: string; fromDate?: string; toDate?: string }): Promise<BookingDocument[]> {
     const query: any = {};
     if (filter?.clientId) query.client = new Types.ObjectId(filter.clientId);
     if (filter?.businessId) query.business = new Types.ObjectId(filter.businessId);
     if (filter?.status) query.status = filter.status;
     if (filter?.bookingNumber) query.bookingNumber = { $regex: filter.bookingNumber, $options: 'i' };
-
-    return this.bookingModel
-      .find(query)
-      .populate('client', 'firstName lastName email phone')
-      .populate('business', 'name category')
-      .populate('service', 'name duration price')
-      .populate('staff', 'firstName lastName')
-      .sort({ startTime: 1 })
-      .exec();
-  }
-
-  async findByBusiness(businessId: string, ownerId: string, search?: string): Promise<BookingDocument[]> {
-    const businesses = await this.businessesService.findByOwner(ownerId);
-    const owned = businesses.find((b) => b._id.toString() === businessId);
-    if (!owned) throw new ForbiddenException('Not authorized to view bookings for this business');
-
-    const query: any = { business: new Types.ObjectId(businessId) };
-    if (search) {
+    if (filter?.fromDate || filter?.toDate) {
+      query.startTime = {};
+      if (filter.fromDate) query.startTime.$gte = new Date(filter.fromDate);
+      if (filter.toDate) query.startTime.$lte = new Date(filter.toDate + 'T23:59:59.999Z');
+    }
+    if (filter?.search) {
       query.$or = [
-        { bookingNumber: { $regex: search, $options: 'i' } },
+        { bookingNumber: { $regex: filter.search, $options: 'i' } },
       ];
     }
 
@@ -142,7 +130,36 @@ export class BookingsService {
       .populate('business', 'name category')
       .populate('service', 'name duration price')
       .populate('staff', 'firstName lastName')
-      .sort({ startTime: 1 })
+      .sort({ startTime: -1 })
+      .exec();
+  }
+
+  async findByBusiness(businessId: string, ownerId: string, filter?: { search?: string; staffId?: string; status?: BookingStatus; fromDate?: string; toDate?: string }): Promise<BookingDocument[]> {
+    const businesses = await this.businessesService.findByOwner(ownerId);
+    const owned = businesses.find((b) => b._id.toString() === businessId);
+    if (!owned) throw new ForbiddenException('Not authorized to view bookings for this business');
+
+    const query: any = { business: new Types.ObjectId(businessId) };
+    if (filter?.status) query.status = filter.status;
+    if (filter?.staffId) query.staff = new Types.ObjectId(filter.staffId);
+    if (filter?.fromDate || filter?.toDate) {
+      query.startTime = {};
+      if (filter.fromDate) query.startTime.$gte = new Date(filter.fromDate);
+      if (filter.toDate) query.startTime.$lte = new Date(filter.toDate + 'T23:59:59.999Z');
+    }
+    if (filter?.search) {
+      query.$or = [
+        { bookingNumber: { $regex: filter.search, $options: 'i' } },
+      ];
+    }
+
+    return this.bookingModel
+      .find(query)
+      .populate('client', 'firstName lastName email phone')
+      .populate('business', 'name category')
+      .populate('service', 'name duration price')
+      .populate('staff', 'firstName lastName')
+      .sort({ startTime: -1 })
       .exec();
   }
 

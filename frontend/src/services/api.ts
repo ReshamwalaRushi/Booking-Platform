@@ -107,7 +107,7 @@ class ApiService {
   }
 
   // Bookings
-  async getBookings(params?: { status?: string; businessId?: string }): Promise<Booking[]> {
+  async getBookings(params?: { status?: string; businessId?: string; search?: string; fromDate?: string; toDate?: string }): Promise<Booking[]> {
     const { data } = await this.client.get<Booking[]>('/bookings', { params });
     return data;
   }
@@ -140,8 +140,8 @@ class ApiService {
     return data;
   }
 
-  async getBusinessBookings(businessId: string): Promise<Booking[]> {
-    const { data } = await this.client.get<Booking[]>(`/bookings/business/${businessId}`);
+  async getBusinessBookings(businessId: string, params?: { search?: string; staffId?: string; status?: string; fromDate?: string; toDate?: string }): Promise<Booking[]> {
+    const { data } = await this.client.get<Booking[]>(`/bookings/business/${businessId}`, { params });
     return data;
   }
 

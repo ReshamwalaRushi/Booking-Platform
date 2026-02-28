@@ -26,25 +26,38 @@ export class BookingsController {
   @ApiQuery({ name: 'status', required: false, enum: BookingStatus })
   @ApiQuery({ name: 'businessId', required: false })
   @ApiQuery({ name: 'bookingNumber', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'fromDate', required: false })
+  @ApiQuery({ name: 'toDate', required: false })
   findMy(
     @CurrentUser() user: any,
     @Query('status') status?: BookingStatus,
     @Query('businessId') businessId?: string,
     @Query('bookingNumber') bookingNumber?: string,
+    @Query('search') search?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
   ) {
-    status = !status ? BookingStatus.PENDING : status;
-    return this.bookingsService.findAll({ status, businessId, bookingNumber });
+    return this.bookingsService.findAll({ clientId: user.userId, status, businessId, bookingNumber, search, fromDate, toDate });
   }
 
   @Get('business/:businessId')
   @ApiOperation({ summary: 'Get all bookings for a business (business owner only)' })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'staffId', required: false })
+  @ApiQuery({ name: 'status', required: false, enum: BookingStatus })
+  @ApiQuery({ name: 'fromDate', required: false })
+  @ApiQuery({ name: 'toDate', required: false })
   findByBusiness(
     @Param('businessId') businessId: string,
     @CurrentUser() user: any,
     @Query('search') search?: string,
+    @Query('staffId') staffId?: string,
+    @Query('status') status?: BookingStatus,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
   ) {
-    return this.bookingsService.findByBusiness(businessId, user.userId, search);
+    return this.bookingsService.findByBusiness(businessId, user.userId, { search, staffId, status, fromDate, toDate });
   }
 
   @Get('available-slots')

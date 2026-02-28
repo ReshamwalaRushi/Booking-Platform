@@ -84,23 +84,9 @@ export function BusinessDetailPage() {
     toast.success(newVal ? 'Added to favorites!' : 'Removed from favorites');
   };
 
-  const handleServiceSelect = async (service: Service) => {
-    setSelectedService(service);
-    setSelectedStaff(undefined);
-    setShowStaffSelection(true);
+  const handleServiceSelect = (service: Service) => {
     if (!business) return;
-    setIsLoadingStaff(true);
-    try {
-      const staff = await api.getStaff(business._id);
-      const assignedStaff = staff.filter((s) =>
-        !s.assignedServices?.length || s.assignedServices.includes(service._id)
-      );
-      setStaffList(assignedStaff.filter((s) => s.isActive));
-    } catch {
-      setStaffList([]);
-    } finally {
-      setIsLoadingStaff(false);
-    }
+    navigate(`/bookings/new?businessId=${business._id}&serviceId=${service._id}`);
   };
 
   const handleStaffSelect = (staff: Staff | null) => {
